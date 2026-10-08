@@ -1,6 +1,6 @@
 import {today,money,displayDate,cents,validDate,makeEntry,normalize,summarize,occurrencesFor,economyBalance} from './finance.js';
 const $ = id => document.getElementById(id);
-const state = {uid:null,data:normalize(),ready:false,profile:{},unsubscribe:null,session:0,editing:null,dirty:false,writing:false,settling:null,customMonths:[],clearRevision:0,currentPage:'inicio',visitedPages:new Set(),dashboardAnimated:false,metricAnimationToken:0,connectionNotified:false,dashboardPeriodMode:'month',expenseFilterMonth:today().slice(0,7),incomeVisibleCount:30};
+const state = {uid:null,data:normalize(),ready:false,profile:{},unsubscribe:null,session:0,editing:null,dirty:false,writing:false,settling:null,customMonths:[],clearRevision:0,currentPage:'inicio',visitedPages:new Set(),dashboardAnimated:false,metricAnimationToken:0,connectionNotified:false,dashboardPeriodMode:'month',incomeVisibleCount:30};
 let repository, noticeTimer;
 const stored = (key,fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
 const remember = (key,value) => { try { localStorage.setItem(key,value); } catch { /* Preferência não impede o uso. */ } };
@@ -29,6 +29,16 @@ async function write(operation) {
 function showAuth(id) { for(const form of $('auth').querySelectorAll('form')) form.hidden=form.id!==id; $('authError').textContent=''; }
 for(const button of document.querySelectorAll('[data-auth]')) button.addEventListener('click',()=>showAuth(button.dataset.auth));
 $('loginForm').addEventListener('submit',e=>{e.preventDefault();const email=$('emailLogin').value.trim(),password=$('senhaLogin').value,keep=$('rememberLogin').checked;formTask(e.currentTarget,'authError',()=>repository.login(email,password,keep));});
+$('toggleLoginPassword').addEventListener('click',()=>{
+  const input=$('senhaLogin'),button=$('toggleLoginPassword'),show=input.type==='password';
+  input.type=show?'text':'password';
+  button.setAttribute('aria-pressed',String(show));
+  button.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');
+  button.title=show?'Ocultar senha':'Mostrar senha';
+  button.querySelector('.password-icon-show').hidden=show;
+  button.querySelector('.password-icon-hide').hidden=!show;
+  input.focus({preventScroll:true});
+});
 $('resetForm').addEventListener('submit',e=>{e.preventDefault();const email=$('emailRecuperacao').value.trim();formTask(e.currentTarget,'authError',async()=>{await repository.resetPassword(email);notify('Se houver uma conta para este e-mail, você receberá as instruções.');});});
 $('registerForm').addEventListener('submit',e=>{e.preventDefault();const nome=$('nomeCadastro').value.trim();const profile={nome,sobrenome:$('sobrenomeCadastro').value.trim(),apelido:$('apelidoCadastro').value.trim()||nome,sexo:$('sexoCadastro').value,email:$('emailCadastro').value.trim(),temaPadrao:'claro',fontePadrao:'Urbanist, sans-serif'};const password=$('senhaCadastro').value,confirm=$('confirmaSenha').value,file=$('fotoCadastro').files[0];formTask(e.currentTarget,'authError',async()=>{
   if(!profile.nome || !profile.sobrenome) throw new Error('Preencha nome e sobrenome.');
@@ -360,7 +370,7 @@ function openDashboardDetail(kind){
 }
 for(const card of document.querySelectorAll('[data-dashboard-detail]'))card.addEventListener('click',()=>openDashboardDetail(card.dataset.dashboardDetail));
 $('dashboardDetailMore').addEventListener('click',()=>setExpenseDetailsVisible($('dashboardExpenseDetails').hidden));$('dashboardExpenseMonth').addEventListener('change',renderExpenseModalDetails);
-$('closeDashboardDetail').addEventListener('click',()=>$('dashboardDetailDialog').close());$('dashboardDetailAction').addEventListener('click',()=>{const target=$('dashboardDetailAction').dataset.targetPage;if(target){if(target==='despesas')setExpenseFilterMonth($('dashboardExpenseMonth').value||defaultExpenseDetailMonth(dashboardPeriod()));$('dashboardDetailDialog').close();showPage(target);}});
+$('closeDashboardDetail').addEventListener('click',()=>$('dashboardDetailDialog').close());$('dashboardDetailAction').addEventListener('click',()=>{const target=$('dashboardDetailAction').dataset.targetPage;if(target){$('dashboardDetailDialog').close();showPage(target);}});
 
 function reviewIssues(){
   const issues=[];
@@ -394,96 +404,17 @@ function render(){
   else if(hasData){status='Equilíbrio';description='Receitas e despesas previstas estão equilibradas.';}
   $('monthStatus').textContent=status;$('monthStatus').dataset.tone=tone;$('trendIcon').textContent=icon;$('monthDescription').textContent=description;
   renderReviewNotice();
-  renderIncomeStatement();renderExpenseList();
+  renderIncomeStatement();list('expenseList',state.data.despesas,e=>renderEntry(e,'despesas'),'Nenhuma despesa adicionada.');
   if($('dashboardDetailDialog').open&&$('dashboardDetailDialog').dataset.kind==='despesas'&&!$('dashboardExpenseDetails').hidden)renderExpenseModalDetails();
   $('economyBalance').textContent=money(economyBalance(state.data));$('economyBalance').className=economyBalance(state.data)<0?'expense':'income';
   list('economyList',state.data.economia||[],renderEconomyItem,'Nenhuma movimentação na sua reserva.');
-  renderNotes();
+  list('notesList',state.data.itens,item=>{const li=node('li');li.append(node('span',item.text));const actions=node('div',undefined,'row-actions');actions.append(action('Excluir',()=>remove('itens',item),`Excluir anotação: ${item.text}`));li.append(actions);return li;},'Nenhuma anotação.');
 }
-function renderNotes(){
-  const target=$('notesList'),scroller=target.closest('.notes-scroll'),previousScroll=scroller.scrollTop;
-  const existing=new Map([...target.children].filter(el=>el.dataset.noteId).map(el=>[el.dataset.noteId,el]));
-  const rows=[];
-  for(const item of state.data.itens){
-    let li=existing.get(item.id);
-    if(!li){
-      li=node('li');li.append(node('span',item.text));const actions=node('div',undefined,'row-actions');const deleteButton=action('Excluir',()=>askDeleteNote(item),`Excluir anotação: ${item.text}`);deleteButton.classList.add('note-delete-button');const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','18');svg.setAttribute('height','18');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML='<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/>';deleteButton.replaceChildren(svg);actions.append(deleteButton);li.append(actions);li.dataset.noteId=item.id;
-    }
-    const label=li.querySelector('span');
-    if(label && label.textContent!==item.text)label.textContent=item.text;
-    rows.push(li);
-  }
-  if(!rows.length){
-    const empty=target.querySelector('.empty')||node('li','Nenhuma anotação.','empty');
-    target.replaceChildren(empty);
-  }else{
-    for(let i=0;i<rows.length;i++){
-      const current=target.children[i];
-      if(current!==rows[i])target.insertBefore(rows[i],current||null);
-    }
-    while(target.children.length>rows.length)target.lastElementChild.remove();
-  }
-  scroller.scrollTop=previousScroll;
-}
-function renderExpenseList(){
-  const month=state.expenseFilterMonth;
-  const entries=month===null?state.data.despesas:state.data.despesas.filter(entry=>{
-    if(entry.pendingReview)return false;
-    return occurrencesFor({...state.data,despesas:[entry]},month).some(row=>row.collection==='despesas');
-  });
-  list('expenseList',entries,entry=>renderEntry(entry,'despesas'),month===null?'Nenhuma despesa adicionada.':'Nenhuma despesa neste mês.');
-}
-$('expenseMonthFilter').value=state.expenseFilterMonth;
-$('expenseFilterApply').addEventListener('click',()=>{
-  const month=$('expenseMonthFilter').value;
-  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){notify('Selecione um mês e ano válidos.',true);return;}
-  setExpenseFilterMonth(month);
-});
-$('expenseFilterAll').addEventListener('click',()=>{
-  state.expenseFilterMonth=null;
-  $('expenseMonthFilter').value='';
-  if(state.ready)renderExpenseList();
-});
-function setExpenseFilterMonth(month){
-  state.expenseFilterMonth=month;
-  $('expenseMonthFilter').value=month||'';
-  if(state.ready)renderExpenseList();
-}
-function iconAction(iconName,label,handler){
-  const button=action('',handler,label);
-  button.className='expense-icon-action';
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.8');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');
-  svg.innerHTML=iconName==='edit'?'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/><path d="M4 4h8v5H4z"/>':'<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/>';
-  button.append(svg);button.title=label;return button;
-}
-let pendingExpenseDelete=null;
-function askDeleteExpense(entry){
-  if(state.writing)return;
-  pendingExpenseDelete=entry;
-  $('confirmExpenseDeleteDescription').textContent=`Deseja excluir “${entry.name}” e todas as suas competências? Esta ação não pode ser desfeita.`;
-  $('confirmExpenseDeleteDialog').showModal();
-}
-function closeExpenseDelete(){
-  if($('confirmExpenseDelete').disabled)return;
-  $('confirmExpenseDeleteDialog').close();pendingExpenseDelete=null;
-}
-$('cancelExpenseDelete').addEventListener('click',closeExpenseDelete);
-$('confirmExpenseDeleteDialog').addEventListener('cancel',event=>{event.preventDefault();closeExpenseDelete();});
-$('confirmExpenseDelete').addEventListener('click',async()=>{
-  if(!pendingExpenseDelete||state.writing)return;
-  const entry=pendingExpenseDelete,button=$('confirmExpenseDelete');button.disabled=true;
-  try{
-    await write({type:'remove',collection:'despesas',id:entry.id,expectedRevision:entry.revision});
-    $('confirmExpenseDeleteDialog').close();pendingExpenseDelete=null;notify('Despesa excluída.');
-  }catch(error){notify(errorMessage(error),true);}
-  finally{button.disabled=false;}
-});
 function renderEntry(entry,collection){
   const li=node('li'),head=node('div',undefined,'entry-heading');li.dataset.entryId=entry.id;li.tabIndex=-1;if(entry.pendingReview||(entry.mode==='legacy'&&entry.occurrences.some(p=>p.estimated)))li.classList.add('has-issue');head.append(node('strong',entry.name),node('span',money(entry.amountCents),`amount ${collection==='receitas'?'income':'expense'}`));li.append(head);
   const occurrences=entry.occurrences;const modeLabel=entry.mode==='monthly'?'mensalidade(s) — valor por mês':entry.mode==='custom'?'competência(s) escolhida(s) — valor por competência':'parcela(s) — valor total';li.append(node('p',entry.pendingReview?'Revisão pendente: defina as datas para incluir nos totais.':entry.openEnded?`Mensal fixa · desde ${displayDate(entry.firstDate)} · sem data final`:entry.category==='Fixa até'?`Fixa até · ${entry.count} mês(es) · ${displayDate(entry.firstDate)} a ${displayDate(entry.endDate||occurrences.at(-1)?.date)}`:`${occurrences.length} ${modeLabel} · ${displayDate(occurrences[0]?.date)} a ${displayDate(occurrences.at(-1)?.date)}`));
   if(entry.mode==='legacy'&&occurrences.some(p=>p.estimated))li.append(node('p','Dias de vencimento a confirmar; meses originais preservados.'));else if(occurrences.some(p=>p.estimated))li.append(node('p','Competências mensais preservadas do sistema anterior.'));
-  const actions=node('div',undefined,'row-actions');if(collection==='despesas'){li.classList.add('expense-entry');actions.classList.add('expense-entry-actions');actions.append(iconAction('edit',`Editar ${entry.name}`,()=>openEntry(collection,entry)),iconAction('trash',`Excluir ${entry.name}`,()=>askDeleteExpense(entry)));}else{actions.append(action('Editar',()=>openEntry(collection,entry),`Editar ${entry.name}`),action('Excluir',()=>remove(collection,entry),`Excluir ${entry.name}`));}li.append(actions);return li;
+  const actions=node('div',undefined,'row-actions');actions.append(action('Editar',()=>openEntry(collection,entry),`Editar ${entry.name}`),action('Excluir',()=>remove(collection,entry),`Excluir ${entry.name}`));li.append(actions);return li;
 }
 function renderOccurrence(row){
   const li=node('li'),head=node('div',undefined,'entry-heading');head.append(node('strong',row.name),node('span',money(row.cents),`amount ${row.collection==='receitas'?'income':'expense'}`));li.append(head);
@@ -501,46 +432,10 @@ function renderEconomyItem(item){
   const actions=node('div',undefined,'row-actions');actions.append(action('Excluir',()=>remove('economia',item),`Excluir movimentação ${item.name}`));li.append(actions);return li;
 }
 async function remove(collection,entry){const label=collection==='itens'?'esta anotação':collection==='economia'?`a movimentação “${entry.name}”`:`“${entry.name}” e todas as suas competências`;if(!confirm(`Excluir ${label}?`))return;try{await write({type:'remove',collection,id:entry.id,expectedRevision:entry.revision});notify('Item excluído.');}catch(error){notify(errorMessage(error),true);}}
-let pendingNoteDelete=null;
-function askDeleteNote(item){
-  if(state.writing)return;
-  pendingNoteDelete=item;
-  $('confirmNoteDeleteDialog').showModal();
-}
-function closeNoteDelete(){if($('confirmNoteDelete').disabled)return;$('confirmNoteDeleteDialog').close();pendingNoteDelete=null;$('noteText').focus({preventScroll:true});}
-$('cancelNoteDelete').addEventListener('click',closeNoteDelete);
-$('confirmNoteDeleteDialog').addEventListener('cancel',event=>{event.preventDefault();closeNoteDelete();});
-$('confirmNoteDelete').addEventListener('click',async()=>{
-  if(!pendingNoteDelete||state.writing)return;
-  const item=pendingNoteDelete,button=$('confirmNoteDelete');button.disabled=true;
-  try{
-    await write({type:'remove',collection:'itens',id:item.id,expectedRevision:item.revision});
-    $('confirmNoteDeleteDialog').close();pendingNoteDelete=null;$('noteText').focus({preventScroll:true});notify('Anotação excluída.');
-  }catch(error){notify(errorMessage(error),true);}
-  finally{button.disabled=false;}
-});
-let notesPageScrollY=null;
-function lockNotesBackground(){
-  if(notesPageScrollY!==null)return;
-  notesPageScrollY=window.scrollY;
-  const body=document.body;
-  body.style.position='fixed';body.style.top=`-${notesPageScrollY}px`;body.style.left='0';body.style.right='0';body.style.width='100%';
-  document.documentElement.classList.add('notes-open');
-}
-function unlockNotesBackground(){
-  if(notesPageScrollY===null)return;
-  const y=notesPageScrollY;notesPageScrollY=null;
-  document.documentElement.classList.remove('notes-open');
-  const body=document.body;
-  body.style.position='';body.style.top='';body.style.left='';body.style.right='';body.style.width='';
-  const root=document.documentElement,previous=root.style.scrollBehavior;
-  root.style.scrollBehavior='auto';window.scrollTo(0,y);root.style.scrollBehavior=previous;
-}
-$('openNotesDialog').addEventListener('click',()=>{lockNotesBackground();$('notesDialog').showModal();requestAnimationFrame(()=>$('noteText').focus({preventScroll:true}));});
+$('openNotesDialog').addEventListener('click',()=>{$('notesDialog').showModal();requestAnimationFrame(()=>$('noteText').focus());});
 $('closeNotesDialog').addEventListener('click',()=>{if(!$('noteForm').dataset.busy)$('notesDialog').close();});
-$('notesDialog').addEventListener('close',()=>{unlockNotesBackground();if(state.ready)render();});
 $('notesDialog').addEventListener('cancel',e=>{if($('noteForm').dataset.busy)e.preventDefault();});
-$('noteForm').addEventListener('submit',async e=>{e.preventDefault();const text=$('noteText').value.trim();if(!text||state.writing)return;const id=crypto.randomUUID();const button=e.currentTarget.querySelector('button');button.disabled=true;try{await write({type:'add',collection:'itens',id,entry:{id,text}});$('noteText').value='';notify('Anotação salva.');}catch(error){notify(errorMessage(error),true);}finally{button.disabled=false;}});
+$('noteForm').addEventListener('submit',async e=>{e.preventDefault();const text=$('noteText').value.trim();if(!text||state.writing)return;const id=crypto.randomUUID();const button=e.currentTarget.querySelector('button');button.disabled=true;$('noteText').disabled=true;try{await write({type:'add',collection:'itens',id,entry:{id,text}});$('noteText').value='';notify('Anotação salva.');}catch(error){notify(errorMessage(error),true);}finally{button.disabled=false;$('noteText').disabled=false;}});
 $('economyDate').value=today();
 $('economyForm').addEventListener('submit',e=>{e.preventDefault();const id=crypto.randomUUID();let value;try{value=cents($('economyValue').value);if(!$('economyName').value.trim())throw new Error('Informe o motivo da movimentação.');if(!validDate($('economyDate').value))throw new Error('Informe uma data válida.');}catch(error){$('economyError').textContent=errorMessage(error);return;}const entry={id,name:$('economyName').value.trim(),kind:$('economyKind').value,cents:value,date:$('economyDate').value,revision:0};formTask(e.currentTarget,'economyError',async()=>{await write({type:'add',collection:'economia',id,entry});e.currentTarget.reset();$('economyDate').value=today();notify('Movimentação da reserva salva.');});});
 for(const button of document.querySelectorAll('[data-add]'))button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openEntry(button.dataset.add);});
@@ -636,13 +531,13 @@ $('cancelClear').addEventListener('click',()=>{if(!$('clearForm').dataset.busy)$
 $('clearForm').addEventListener('submit',e=>{e.preventDefault();if($('clearConfirmation').value!=='APAGAR')return;formTask(e.currentTarget,'clearError',async()=>{await write({type:'clear',expectedRevision:state.clearRevision});$('clearDialog').close();notify('Dados financeiros apagados.');});});
 async function authChanged(user){
   const session=++state.session;state.unsubscribe?.();state.unsubscribe=null;state.uid=user?.uid||null;state.ready=false;state.profile={};state.data=normalize();
-  setSettingsMenu(false);document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());unlockNotesBackground();state.editing=null;state.dirty=false;state.currentPage='inicio';state.visitedPages=new Set();state.dashboardAnimated=false;state.metricAnimationToken++;state.connectionNotified=false;state.incomeVisibleCount=30;$('notice').hidden=true;
+  setSettingsMenu(false);document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());state.editing=null;state.dirty=false;state.currentPage='inicio';state.visitedPages=new Set();state.dashboardAnimated=false;state.metricAnimationToken++;state.connectionNotified=false;state.incomeVisibleCount=30;$('notice').hidden=true;
   for(const id of ['incomeList','expenseList','economyList','notesList'])$(id).replaceChildren();for(const id of ['incomeTotal','expenseTotal','balanceTotal','actualBalanceTotal','incomeForecast','incomeReceivable','expensePaid','expensePayable','economyBalance'])$(id).textContent='R$ 0,00';$('actualSummary').textContent='';$('reviewNotice').hidden=true;
   renderProfile();$('commitmentValue').textContent='0%';$('commitmentBar').style.width='0%';$('analysisIncomeShare').textContent='0%';$('analysisExpenseShare').textContent='0%';$('analysisIncomeBar').style.width='0%';$('analysisExpenseBar').style.width='0%';$('monthStatus').textContent='Sem dados';$('monthStatus').dataset.tone='neutral';$('trendIcon').textContent='→';$('monthDescription').textContent='Sem movimentação no período.';$('profilePhoto').value='';$('noteText').value='';$('auth').hidden=!!user;$('app').hidden=!user;$('authLoading').hidden=true;
-  $('senhaLogin').value='';$('senhaCadastro').value='';$('confirmaSenha').value='';$('sexoCadastro').value='';
+  $('senhaLogin').value='';$('senhaLogin').type='password';$('toggleLoginPassword').setAttribute('aria-pressed','false');$('toggleLoginPassword').setAttribute('aria-label','Mostrar senha');$('toggleLoginPassword').title='Mostrar senha';$('toggleLoginPassword').querySelector('.password-icon-show').hidden=false;$('toggleLoginPassword').querySelector('.password-icon-hide').hidden=true;$('senhaCadastro').value='';$('confirmaSenha').value='';$('sexoCadastro').value='';
   if(!user){showAuth('loginForm');renderProfile();return;}
   showPage('inicio',{animate:false,focus:false});updateConnection();
-  state.unsubscribe=repository.watchFinance(user.uid,data=>{if(session!==state.session)return;state.data=data;state.ready=true;updateConnection();if($('notesDialog').open){renderNotes();}else{render();}maybeStartProductTour();},error=>{if(session!==state.session)return;state.ready=false;$('connectionStatus').textContent=errorMessage(error);notify(errorMessage(error),true);});
+  state.unsubscribe=repository.watchFinance(user.uid,data=>{if(session!==state.session)return;state.data=data;state.ready=true;updateConnection();render();maybeStartProductTour();},error=>{if(session!==state.session)return;state.ready=false;$('connectionStatus').textContent=errorMessage(error);notify(errorMessage(error),true);});
   try{const profile=await repository.getProfile(user.uid);if(session===state.session){state.profile=profile;const cloudTheme=['claro','escuro','margaridas'].includes(profile.temaPadrao)?profile.temaPadrao:$('themeSelect').value;const cloudFont=[...$('fontSelect').options].some(option=>option.value===profile.fontePadrao)?profile.fontePadrao:$('fontSelect').value;$('themeSelect').value=cloudTheme||'claro';$('fontSelect').value=cloudFont||'Urbanist, sans-serif';remember('temaSolon',$('themeSelect').value);remember('fonteSolon',$('fontSelect').value);applyAppearance();renderProfile();if(!profile.nome||!profile.sobrenome)notify('Complete seu nome e sobrenome em Configurações.');}}catch(error){if(session===state.session)notify(errorMessage(error),true);}
 }
 try{repository=await import('./repository.js');repository.watchAuth(authChanged);}catch{ $('authLoading').hidden=true;$('authError').textContent='Não foi possível carregar o acesso. Verifique sua conexão e recarregue a página.'; }

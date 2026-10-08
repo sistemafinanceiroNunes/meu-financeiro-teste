@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=38">
+  <link rel="stylesheet" href="styles.css?v=32">
 </head>
 <body>
   <a class="skip-link" href="#main">Ir para o conteúdo</a>
@@ -27,7 +27,14 @@
         <p id="authLoading" role="status">Carregando acesso…</p>
         <form id="loginForm" hidden>
           <label for="emailLogin">E-mail</label><input id="emailLogin" name="email" type="email" autocomplete="username" required>
-          <label for="senhaLogin">Senha</label><input id="senhaLogin" name="password" type="password" autocomplete="current-password" required>
+          <label for="senhaLogin">Senha</label>
+          <div class="password-field">
+            <input id="senhaLogin" name="password" type="password" autocomplete="current-password" required>
+            <button id="toggleLoginPassword" class="password-toggle" type="button" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">
+              <i class="password-icon-show" data-lucide="eye" aria-hidden="true"></i>
+              <i class="password-icon-hide" data-lucide="eye-off" aria-hidden="true" hidden></i>
+            </button>
+          </div>
           <label class="check-row" for="rememberLogin"><input id="rememberLogin" type="checkbox"> <span>Manter conectado neste dispositivo</span></label>
           <button class="primary" type="submit">Entrar</button>
           <button class="link" type="button" data-auth="registerForm">Novo usuário? Criar conta</button>
@@ -37,7 +44,8 @@
           <h2>Nova conta</h2>
           <label for="nomeCadastro">Nome</label><input id="nomeCadastro" name="nome" autocomplete="given-name" maxlength="80" required>
           <label for="sobrenomeCadastro">Sobrenome</label><input id="sobrenomeCadastro" name="sobrenome" autocomplete="family-name" maxlength="80" required>
-          <label for="apelidoCadastro">Como quer ser chamado? (opcional)</label><input id="apelidoCadastro" name="apelido" maxlength="80"><label for="sexoCadastro">Sexo (opcional)</label><select id="sexoCadastro" name="sexo"><option value="">Prefiro não informar</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option></select>
+          <label for="apelidoCadastro">Como quer ser chamado? (opcional)</label><input id="apelidoCadastro" name="apelido" maxlength="80">
+          <label for="sexoCadastro">Sexo (opcional)</label><select id="sexoCadastro" name="sexo"><option value="">Prefiro não informar</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option></select>
           <label for="emailCadastro">E-mail</label><input id="emailCadastro" name="email" type="email" autocomplete="email" required>
           <label for="senhaCadastro">Senha (mínimo 6 caracteres)</label><input id="senhaCadastro" name="password" type="password" autocomplete="new-password" minlength="6" required>
           <label for="confirmaSenha">Repita a senha</label><input id="confirmaSenha" name="confirm" type="password" autocomplete="new-password" minlength="6" required>
@@ -245,7 +253,7 @@
           <button id="incomeLoadMore" class="statement-load-more" type="button" hidden>Carregar mais</button>
         </section>
         <section id="page-despesas" class="page" hidden>
-          <span class="eyebrow">Saídas</span><h1>Minhas despesas</h1><p>Organize pagamentos únicos, parcelas e despesas mensais.</p><button class="primary action-button" type="button" data-add="despesas"><i data-lucide="plus" aria-hidden="true"></i>Adicionar despesa</button><div class="expense-filter"><label for="expenseMonthFilter">Filtrar por mês e ano</label><input id="expenseMonthFilter" type="month" aria-label="Mês e ano das despesas"><button id="expenseFilterApply" class="primary" type="button">Aplicar</button><button id="expenseFilterAll" type="button">Todas</button></div><ul id="expenseList" class="entry-list"></ul>
+          <span class="eyebrow">Saídas</span><h1>Minhas despesas</h1><p>Organize pagamentos únicos, parcelas e despesas mensais.</p><button class="primary action-button" type="button" data-add="despesas"><i data-lucide="plus" aria-hidden="true"></i>Adicionar despesa</button><ul id="expenseList" class="entry-list"></ul>
         </section>
         <section id="page-economia" class="page" hidden>
           <span class="eyebrow">Reserva</span><h1>Banco Economia</h1><p>Registre o que você guardou e o que precisou retirar da sua reserva.</p>
@@ -267,7 +275,8 @@
             <form id="profileForm" class="quadrant"><h2>Perfil e aparência</h2>
               <label for="profileName">Nome</label><input id="profileName" name="nome" autocomplete="given-name" maxlength="80" required>
               <label for="profileSurname">Sobrenome</label><input id="profileSurname" name="sobrenome" autocomplete="family-name" maxlength="80" required>
-              <label for="profileNickname">Como quer ser chamado?</label><input id="profileNickname" name="apelido" maxlength="80" placeholder="Opcional"><label for="profileSex">Sexo (opcional)</label><select id="profileSex" name="sexo"><option value="">Prefiro não informar</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option></select>
+              <label for="profileNickname">Como quer ser chamado?</label><input id="profileNickname" name="apelido" maxlength="80" placeholder="Opcional">
+              <label for="profileSex">Sexo (opcional)</label><select id="profileSex" name="sexo"><option value="">Prefiro não informar</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option></select>
               <label for="profilePhoto">Foto de perfil</label><input id="profilePhoto" type="file" accept="image/png,image/jpeg,image/webp"><img id="photoPreview" class="avatar" alt="Prévia da foto" hidden>
               <label for="themeSelect">Tema visual</label><select id="themeSelect"><option value="claro">Claro</option><option value="escuro">Escuro</option><option value="margaridas">🌼 Margaridas</option></select>
               <label for="fontSelect">Fonte</label><select id="fontSelect"><option value="Urbanist, sans-serif">Urbanist</option><option value="system-ui, sans-serif">Sistema</option><option value="Georgia, serif">Georgia</option></select>
@@ -308,8 +317,6 @@
     </form>
     <div class="notes-scroll"><ul id="notesList" class="entry-list"></ul></div>
   </dialog>
-  <dialog id="confirmExpenseDeleteDialog" class="note-confirm-dialog" aria-labelledby="confirmExpenseDeleteTitle"><h2 id="confirmExpenseDeleteTitle">Excluir despesa?</h2><p id="confirmExpenseDeleteDescription">Deseja excluir esta despesa e todas as suas competências? Esta ação não pode ser desfeita.</p><div class="form-actions"><button type="button" id="cancelExpenseDelete">Cancelar</button><button type="button" class="danger" id="confirmExpenseDelete">Sim, excluir</button></div></dialog>
-  <dialog id="confirmNoteDeleteDialog" class="note-confirm-dialog" aria-labelledby="confirmNoteDeleteTitle"><h2 id="confirmNoteDeleteTitle">Excluir anotação?</h2><p>Tem certeza de que deseja apagar esta anotação? Esta ação não pode ser desfeita.</p><div class="form-actions"><button type="button" id="cancelNoteDelete">Cancelar</button><button type="button" class="danger" id="confirmNoteDelete">Sim, excluir</button></div></dialog>
   <dialog id="dashboardDetailDialog" aria-labelledby="dashboardDetailTitle">
     <div class="dialog-heading"><div><span id="dashboardDetailEyebrow" class="eyebrow">Resumo</span><h2 id="dashboardDetailTitle">Detalhes</h2></div><button type="button" id="closeDashboardDetail" class="icon-button" aria-label="Fechar detalhes"><i data-lucide="x" aria-hidden="true"></i></button></div>
     <div id="dashboardDetailBody" class="dashboard-detail-body"></div>
@@ -370,7 +377,7 @@
   <noscript>Ative o JavaScript para acessar o sistema financeiro.</noscript>
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script>window.lucide?.createIcons();</script>
-  <script type="module" src="js/app.js?v=38"></script>
-  <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js?v=38").catch(()=>{}));}</script>
+  <script type="module" src="js/app.js?v=32"></script>
+  <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js?v=32").catch(()=>{}));}</script>
 </body>
 </html>

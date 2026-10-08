@@ -80,6 +80,7 @@ svg{width:18px;height:18px;stroke-width:1.65}.icon-button{width:42px;min-width:4
 .login-box{background:var(--surface);padding:28px;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm)}
 .login-heading{margin-bottom:23px}.login-heading h1{font-size:31px}.login-heading p{margin:0;color:var(--muted);font-size:13px}
 .login-box form>button{display:block;width:100%;margin-top:12px}.developer-footer{margin-top:15px;color:var(--muted-2);text-align:center;font-size:11px;line-height:1.7}
+.password-field{position:relative}.password-field input{padding-right:50px}.password-toggle{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:38px;min-width:38px;min-height:38px;padding:0;border:0;border-radius:10px;background:transparent;color:var(--muted);display:grid;place-items:center}.password-toggle:hover{background:var(--surface-soft);color:var(--text);border:0;transform:translateY(-50%)}.password-toggle:active{transform:translateY(-50%) scale(.96)}.password-toggle svg{width:17px;height:17px}.password-toggle [hidden]{display:none!important}
 #authError,[role=alert]{color:var(--expense);line-height:1.5}#authError:empty,[role=alert]:empty{display:none}
 
 /* Shell — sidebar integrada e recolhível no desktop */
@@ -323,37 +324,3 @@ body.margaridas .auth-screen::after{background:#fff;opacity:.14}
 body.margaridas .topbar{background:color-mix(in srgb,var(--bg) 90%,transparent)}
 body.margaridas .login-box,body.margaridas .quadrant{box-shadow:0 8px 26px rgba(134,52,90,.08)}
 body.margaridas .brand-mark>span{background:#e6a54b}
-
-/* Mantém a visão geral imóvel enquanto Anotações estiver aberta. */
-html.notes-open{overflow:hidden;scrollbar-gutter:stable}
-html.notes-open body{overflow-anchor:none}
-.notes-dialog .notes-scroll{overscroll-behavior:contain;overflow-anchor:none;scroll-behavior:auto}
-
-/* Janela ampliada de anotações e cartões compactos */
-.notes-dialog{position:fixed;inset:50% auto auto 50%;margin:0;transform:translate(-50%,-50%);height:min(82dvh,780px);max-height:calc(100dvh - 24px);display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;overflow-anchor:none;overscroll-behavior:contain}
-.notes-dialog:not([open]){display:none}
-.notes-dialog .notes-scroll{flex:1;min-height:0;max-height:none;overflow-y:auto}
-.notes-dialog #notesList li{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:38px;padding:8px 12px;margin-bottom:6px}
-.notes-dialog #notesList li>span{min-width:0;overflow-wrap:anywhere;flex:1}
-.notes-dialog #notesList .row-actions{margin-left:auto;flex-shrink:0}
-.notes-dialog .note-delete-button{display:inline-grid;place-items:center;width:32px;height:32px;padding:5px;border-radius:9px}
-.notes-dialog .note-delete-button svg{width:17px;height:17px}
-.note-confirm-dialog{position:fixed;inset:50% auto auto 50%;margin:0;transform:translate(-50%,-50%);width:min(390px,calc(100% - 28px));overscroll-behavior:contain}
-.note-confirm-dialog .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
-@media(max-width:520px){.notes-dialog{height:min(86dvh,780px)}}
-
-/* Anotações: janela estável durante inserções e exclusões. */
-.notes-dialog[open],.note-confirm-dialog[open]{animation:none;transition:none;scroll-behavior:auto}
-.notes-dialog #notesList{overflow-anchor:none}
-
-/* Mobile: escolha de tema somente em Configurações, com salvamento explícito. */
-@media(max-width:759px){#themeToggle{display:none!important}}
-
-/* Despesas: filtro de competência e ações compactas. */
-.expense-filter{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:15px 0 10px}.expense-filter label{margin:0;font-size:11px}.expense-filter input{width:165px;min-height:38px;font-size:12px}.expense-filter button{min-height:38px;font-size:11px;padding:7px 13px}.expense-entry{padding:11px 13px!important}.expense-entry p{margin:5px 0}.expense-entry-actions{justify-content:flex-end;margin-top:4px;gap:5px}.expense-entry-actions .expense-icon-action{width:34px;min-width:34px;height:34px;min-height:34px;padding:6px;border-radius:9px;display:inline-grid;place-items:center}.expense-icon-action svg{width:17px;height:17px}.expense-entry-actions .expense-icon-action:last-child{color:var(--expense)}
-/* Anotações: impede que a rolagem do documento altere o painel ao salvar. */
-html.notes-open{scroll-behavior:auto;overscroll-behavior:none}html.notes-open body{overflow:hidden;overscroll-behavior:none}
-
-/* Despesas — destaque dos valores e confirmação explícita do filtro mensal. */
-#page-despesas .expense-entry .entry-heading .amount{font-size:clamp(17px,2.4vw,21px);font-weight:700;line-height:1.3;font-variant-numeric:tabular-nums}
-#page-despesas .expense-filter #expenseFilterApply{font-weight:700}
