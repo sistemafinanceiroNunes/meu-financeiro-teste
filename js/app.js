@@ -438,8 +438,32 @@ $('confirmNoteDelete').addEventListener('click',async()=>{
   }catch(error){notify(errorMessage(error),true);}
   finally{button.disabled=false;}
 });
-$('openNotesDialog').addEventListener('click',()=>{$('notesDialog').showModal();requestAnimationFrame(()=>$('noteText').focus());});
+let notesPageScrollY=null;
+function lockNotesBackground(){
+  if(notesPageScrollY!==null)return;
+  notesPageScrollY=window.scrollY;
+  document.body.style.position='fixed';
+  document.body.style.top=`-${notesPageScrollY}px`;
+  document.body.style.left='0';
+  document.body.style.right='0';
+  document.body.style.width='100%';
+}
+function unlockNotesBackground(){
+  if(notesPageScrollY===null)return;
+  const y=notesPageScrollY;notesPageScrollY=null;
+  document.body.style.position='';
+  document.body.style.top='';
+  document.body.style.left='';
+  document.body.style.right='';
+  document.body.style.width='';
+  const root=document.documentElement,previous=root.style.scrollBehavior;
+  root.style.scrollBehavior='auto';
+  window.scrollTo(0,y);
+  root.style.scrollBehavior=previous;
+}
+$('openNotesDialog').addEventListener('click',()=>{lockNotesBackground();$('notesDialog').showModal();requestAnimationFrame(()=>$('noteText').focus({preventScroll:true}));});
 $('closeNotesDialog').addEventListener('click',()=>{if(!$('noteForm').dataset.busy)$('notesDialog').close();});
+$('notesDialog').addEventListener('close',unlockNotesBackground);
 $('notesDialog').addEventListener('cancel',e=>{if($('noteForm').dataset.busy)e.preventDefault();});
 $('noteForm').addEventListener('submit',async e=>{e.preventDefault();const text=$('noteText').value.trim();if(!text||state.writing)return;const id=crypto.randomUUID();const button=e.currentTarget.querySelector('button');button.disabled=true;$('noteText').disabled=true;try{await write({type:'add',collection:'itens',id,entry:{id,text}});$('noteText').value='';notify('Anotação salva.');}catch(error){notify(errorMessage(error),true);}finally{button.disabled=false;$('noteText').disabled=false;}});
 $('economyDate').value=today();
@@ -537,7 +561,7 @@ $('cancelClear').addEventListener('click',()=>{if(!$('clearForm').dataset.busy)$
 $('clearForm').addEventListener('submit',e=>{e.preventDefault();if($('clearConfirmation').value!=='APAGAR')return;formTask(e.currentTarget,'clearError',async()=>{await write({type:'clear',expectedRevision:state.clearRevision});$('clearDialog').close();notify('Dados financeiros apagados.');});});
 async function authChanged(user){
   const session=++state.session;state.unsubscribe?.();state.unsubscribe=null;state.uid=user?.uid||null;state.ready=false;state.profile={};state.data=normalize();
-  setSettingsMenu(false);document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());state.editing=null;state.dirty=false;state.currentPage='inicio';state.visitedPages=new Set();state.dashboardAnimated=false;state.metricAnimationToken++;state.connectionNotified=false;state.incomeVisibleCount=30;$('notice').hidden=true;
+  setSettingsMenu(false);document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());unlockNotesBackground();state.editing=null;state.dirty=false;state.currentPage='inicio';state.visitedPages=new Set();state.dashboardAnimated=false;state.metricAnimationToken++;state.connectionNotified=false;state.incomeVisibleCount=30;$('notice').hidden=true;
   for(const id of ['incomeList','expenseList','economyList','notesList'])$(id).replaceChildren();for(const id of ['incomeTotal','expenseTotal','balanceTotal','actualBalanceTotal','incomeForecast','incomeReceivable','expensePaid','expensePayable','economyBalance'])$(id).textContent='R$ 0,00';$('actualSummary').textContent='';$('reviewNotice').hidden=true;
   renderProfile();$('commitmentValue').textContent='0%';$('commitmentBar').style.width='0%';$('analysisIncomeShare').textContent='0%';$('analysisExpenseShare').textContent='0%';$('analysisIncomeBar').style.width='0%';$('analysisExpenseBar').style.width='0%';$('monthStatus').textContent='Sem dados';$('monthStatus').dataset.tone='neutral';$('trendIcon').textContent='→';$('monthDescription').textContent='Sem movimentação no período.';$('profilePhoto').value='';$('noteText').value='';$('auth').hidden=!!user;$('app').hidden=!user;$('authLoading').hidden=true;
   $('senhaLogin').value='';$('senhaCadastro').value='';$('confirmaSenha').value='';
