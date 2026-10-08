@@ -331,7 +331,7 @@ body:has(.notes-dialog[open]) .app-shell{overflow-anchor:none}
 .notes-dialog .notes-scroll{overscroll-behavior:contain;overflow-anchor:none}
 
 /* Janela ampliada de anotações e cartões compactos */
-.notes-dialog{height:min(82dvh,780px);max-height:calc(100dvh - 24px);display:flex;flex-direction:column;box-sizing:border-box}
+.notes-dialog{position:fixed;inset:50% auto auto 50%;margin:0;transform:translate(-50%,-50%);height:min(82dvh,780px);max-height:calc(100dvh - 24px);display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;overflow-anchor:none;overscroll-behavior:contain}
 .notes-dialog:not([open]){display:none}
 .notes-dialog .notes-scroll{flex:1;min-height:0;max-height:none;overflow-y:auto}
 .notes-dialog #notesList li{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:38px;padding:8px 12px;margin-bottom:6px}
@@ -339,6 +339,6 @@ body:has(.notes-dialog[open]) .app-shell{overflow-anchor:none}
 .notes-dialog #notesList .row-actions{margin-left:auto;flex-shrink:0}
 .notes-dialog .note-delete-button{display:inline-grid;place-items:center;width:32px;height:32px;padding:5px;border-radius:9px}
 .notes-dialog .note-delete-button svg{width:17px;height:17px}
-.note-confirm-dialog{width:min(390px,calc(100% - 28px))}
+.note-confirm-dialog{position:fixed;inset:50% auto auto 50%;margin:0;transform:translate(-50%,-50%);width:min(390px,calc(100% - 28px));overscroll-behavior:contain}
 .note-confirm-dialog .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
 @media(max-width:520px){.notes-dialog{height:min(86dvh,780px)}}
