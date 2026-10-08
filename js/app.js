@@ -1,6 +1,6 @@
 import {today,money,displayDate,cents,validDate,makeEntry,normalize,summarize,occurrencesFor,economyBalance} from './finance.js';
 const $ = id => document.getElementById(id);
-const state = {uid:null,data:normalize(),ready:false,profile:{},unsubscribe:null,session:0,editing:null,dirty:false,writing:false,settling:null,customMonths:[],clearRevision:0,currentPage:'inicio',visitedPages:new Set(),dashboardAnimated:false,metricAnimationToken:0,connectionNotified:false,dashboardPeriodMode:'month',incomeVisibleCount:30};
+const state = {uid:null,data:normalize(),ready:false,profile:{},unsubscribe:null,session:0,editing:null,dirty:false,writing:false,settling:null,customMonths:[],clearRevision:0,currentPage:'inicio',visitedPages:new Set(),dashboardAnimated:false,metricAnimationToken:0,connectionNotified:false,dashboardPeriodMode:'month',expenseFilterMonth:today().slice(0,7),incomeVisibleCount:30};
 let repository, noticeTimer;
 const stored = (key,fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
 const remember = (key,value) => { try { localStorage.setItem(key,value); } catch { /* Preferência não impede o uso. */ } };
@@ -358,7 +358,7 @@ function openDashboardDetail(kind){
 }
 for(const card of document.querySelectorAll('[data-dashboard-detail]'))card.addEventListener('click',()=>openDashboardDetail(card.dataset.dashboardDetail));
 $('dashboardDetailMore').addEventListener('click',()=>setExpenseDetailsVisible($('dashboardExpenseDetails').hidden));$('dashboardExpenseMonth').addEventListener('change',renderExpenseModalDetails);
-$('closeDashboardDetail').addEventListener('click',()=>$('dashboardDetailDialog').close());$('dashboardDetailAction').addEventListener('click',()=>{const target=$('dashboardDetailAction').dataset.targetPage;if(target){$('dashboardDetailDialog').close();showPage(target);}});
+$('closeDashboardDetail').addEventListener('click',()=>$('dashboardDetailDialog').close());$('dashboardDetailAction').addEventListener('click',()=>{const target=$('dashboardDetailAction').dataset.targetPage;if(target){if(target==='despesas')setExpenseFilterMonth($('dashboardExpenseMonth').value||defaultExpenseDetailMonth(dashboardPeriod()));$('dashboardDetailDialog').close();showPage(target);}});
 
 function reviewIssues(){
   const issues=[];
@@ -392,7 +392,7 @@ function render(){
   else if(hasData){status='Equilíbrio';description='Receitas e despesas previstas estão equilibradas.';}
   $('monthStatus').textContent=status;$('monthStatus').dataset.tone=tone;$('trendIcon').textContent=icon;$('monthDescription').textContent=description;
   renderReviewNotice();
-  renderIncomeStatement();list('expenseList',state.data.despesas,e=>renderEntry(e,'despesas'),'Nenhuma despesa adicionada.');
+  renderIncomeStatement();renderExpenseList();
   if($('dashboardDetailDialog').open&&$('dashboardDetailDialog').dataset.kind==='despesas'&&!$('dashboardExpenseDetails').hidden)renderExpenseModalDetails();
   $('economyBalance').textContent=money(economyBalance(state.data));$('economyBalance').className=economyBalance(state.data)<0?'expense':'income';
   list('economyList',state.data.economia||[],renderEconomyItem,'Nenhuma movimentação na sua reserva.');
@@ -423,11 +423,66 @@ function renderNotes(){
   }
   scroller.scrollTop=previousScroll;
 }
+function renderExpenseList(){
+  const month=state.expenseFilterMonth;
+  const entries=month===null?state.data.despesas:state.data.despesas.filter(entry=>{
+    if(entry.pendingReview)return false;
+    return occurrencesFor({...state.data,despesas:[entry]},month).some(row=>row.collection==='despesas');
+  });
+  list('expenseList',entries,entry=>renderEntry(entry,'despesas'),month===null?'Nenhuma despesa adicionada.':'Nenhuma despesa neste mês.');
+}
+$('expenseMonthFilter').value=state.expenseFilterMonth;
+$('expenseMonthFilter').addEventListener('change',()=>{
+  const month=$('expenseMonthFilter').value;
+  if(!/^\\d{4}-(0[1-9]|1[0-2])$/.test(month))return;
+  state.expenseFilterMonth=month;
+  if(state.ready)renderExpenseList();
+});
+$('expenseFilterAll').addEventListener('click',()=>{
+  state.expenseFilterMonth=null;
+  $('expenseMonthFilter').value='';
+  if(state.ready)renderExpenseList();
+});
+function setExpenseFilterMonth(month){
+  state.expenseFilterMonth=month;
+  $('expenseMonthFilter').value=month||'';
+  if(state.ready)renderExpenseList();
+}
+function iconAction(iconName,label,handler){
+  const button=action('',handler,label);
+  button.className='expense-icon-action';
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.8');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');
+  svg.innerHTML=iconName==='edit'?'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/><path d="M4 4h8v5H4z"/>':'<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/>';
+  button.append(svg);button.title=label;return button;
+}
+let pendingExpenseDelete=null;
+function askDeleteExpense(entry){
+  if(state.writing)return;
+  pendingExpenseDelete=entry;
+  $('confirmExpenseDeleteDescription').textContent=`Deseja excluir “${entry.name}” e todas as suas competências? Esta ação não pode ser desfeita.`;
+  $('confirmExpenseDeleteDialog').showModal();
+}
+function closeExpenseDelete(){
+  if($('confirmExpenseDelete').disabled)return;
+  $('confirmExpenseDeleteDialog').close();pendingExpenseDelete=null;
+}
+$('cancelExpenseDelete').addEventListener('click',closeExpenseDelete);
+$('confirmExpenseDeleteDialog').addEventListener('cancel',event=>{event.preventDefault();closeExpenseDelete();});
+$('confirmExpenseDelete').addEventListener('click',async()=>{
+  if(!pendingExpenseDelete||state.writing)return;
+  const entry=pendingExpenseDelete,button=$('confirmExpenseDelete');button.disabled=true;
+  try{
+    await write({type:'remove',collection:'despesas',id:entry.id,expectedRevision:entry.revision});
+    $('confirmExpenseDeleteDialog').close();pendingExpenseDelete=null;notify('Despesa excluída.');
+  }catch(error){notify(errorMessage(error),true);}
+  finally{button.disabled=false;}
+});
 function renderEntry(entry,collection){
   const li=node('li'),head=node('div',undefined,'entry-heading');li.dataset.entryId=entry.id;li.tabIndex=-1;if(entry.pendingReview||(entry.mode==='legacy'&&entry.occurrences.some(p=>p.estimated)))li.classList.add('has-issue');head.append(node('strong',entry.name),node('span',money(entry.amountCents),`amount ${collection==='receitas'?'income':'expense'}`));li.append(head);
   const occurrences=entry.occurrences;const modeLabel=entry.mode==='monthly'?'mensalidade(s) — valor por mês':entry.mode==='custom'?'competência(s) escolhida(s) — valor por competência':'parcela(s) — valor total';li.append(node('p',entry.pendingReview?'Revisão pendente: defina as datas para incluir nos totais.':entry.openEnded?`Mensal fixa · desde ${displayDate(entry.firstDate)} · sem data final`:entry.category==='Fixa até'?`Fixa até · ${entry.count} mês(es) · ${displayDate(entry.firstDate)} a ${displayDate(entry.endDate||occurrences.at(-1)?.date)}`:`${occurrences.length} ${modeLabel} · ${displayDate(occurrences[0]?.date)} a ${displayDate(occurrences.at(-1)?.date)}`));
   if(entry.mode==='legacy'&&occurrences.some(p=>p.estimated))li.append(node('p','Dias de vencimento a confirmar; meses originais preservados.'));else if(occurrences.some(p=>p.estimated))li.append(node('p','Competências mensais preservadas do sistema anterior.'));
-  const actions=node('div',undefined,'row-actions');actions.append(action('Editar',()=>openEntry(collection,entry),`Editar ${entry.name}`),action('Excluir',()=>remove(collection,entry),`Excluir ${entry.name}`));li.append(actions);return li;
+  const actions=node('div',undefined,'row-actions');if(collection==='despesas'){li.classList.add('expense-entry');actions.classList.add('expense-entry-actions');actions.append(iconAction('edit',`Editar ${entry.name}`,()=>openEntry(collection,entry)),iconAction('trash',`Excluir ${entry.name}`,()=>askDeleteExpense(entry)));}else{actions.append(action('Editar',()=>openEntry(collection,entry),`Editar ${entry.name}`),action('Excluir',()=>remove(collection,entry),`Excluir ${entry.name}`));}li.append(actions);return li;
 }
 function renderOccurrence(row){
   const li=node('li'),head=node('div',undefined,'entry-heading');head.append(node('strong',row.name),node('span',money(row.cents),`amount ${row.collection==='receitas'?'income':'expense'}`));li.append(head);
@@ -467,12 +522,18 @@ let notesPageScrollY=null;
 function lockNotesBackground(){
   if(notesPageScrollY!==null)return;
   notesPageScrollY=window.scrollY;
+  const body=document.body;
+  body.style.position='fixed';body.style.top=`-${notesPageScrollY}px`;body.style.left='0';body.style.right='0';body.style.width='100%';
   document.documentElement.classList.add('notes-open');
 }
 function unlockNotesBackground(){
   if(notesPageScrollY===null)return;
-  notesPageScrollY=null;
+  const y=notesPageScrollY;notesPageScrollY=null;
   document.documentElement.classList.remove('notes-open');
+  const body=document.body;
+  body.style.position='';body.style.top='';body.style.left='';body.style.right='';body.style.width='';
+  const root=document.documentElement,previous=root.style.scrollBehavior;
+  root.style.scrollBehavior='auto';window.scrollTo(0,y);root.style.scrollBehavior=previous;
 }
 $('openNotesDialog').addEventListener('click',()=>{lockNotesBackground();$('notesDialog').showModal();requestAnimationFrame(()=>$('noteText').focus({preventScroll:true}));});
 $('closeNotesDialog').addEventListener('click',()=>{if(!$('noteForm').dataset.busy)$('notesDialog').close();});

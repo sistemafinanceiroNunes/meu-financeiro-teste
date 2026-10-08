@@ -348,3 +348,8 @@ html.notes-open body{overflow-anchor:none}
 
 /* Mobile: escolha de tema somente em Configurações, com salvamento explícito. */
 @media(max-width:759px){#themeToggle{display:none!important}}
+
+/* Despesas: filtro de competência e ações compactas. */
+.expense-filter{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:15px 0 10px}.expense-filter label{margin:0;font-size:11px}.expense-filter input{width:165px;min-height:38px;font-size:12px}.expense-filter button{min-height:38px;font-size:11px;padding:7px 13px}.expense-entry{padding:11px 13px!important}.expense-entry p{margin:5px 0}.expense-entry-actions{justify-content:flex-end;margin-top:4px;gap:5px}.expense-entry-actions .expense-icon-action{width:34px;min-width:34px;height:34px;min-height:34px;padding:6px;border-radius:9px;display:inline-grid;place-items:center}.expense-icon-action svg{width:17px;height:17px}.expense-entry-actions .expense-icon-action:last-child{color:var(--expense)}
+/* Anotações: impede que a rolagem do documento altere o painel ao salvar. */
+html.notes-open{scroll-behavior:auto;overscroll-behavior:none}html.notes-open body{overflow:hidden;overscroll-behavior:none}
