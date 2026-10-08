@@ -345,3 +345,6 @@ html.notes-open body{overflow-anchor:none}
 /* Anotações: janela estável durante inserções e exclusões. */
 .notes-dialog[open],.note-confirm-dialog[open]{animation:none;transition:none;scroll-behavior:auto}
 .notes-dialog #notesList{overflow-anchor:none}
+
+/* Mobile: escolha de tema somente em Configurações, com salvamento explícito. */
+@media(max-width:759px){#themeToggle{display:none!important}}
