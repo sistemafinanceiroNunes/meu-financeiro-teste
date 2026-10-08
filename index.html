@@ -13,14 +13,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=26">
+  <link rel="stylesheet" href="styles.css?v=28">
 </head>
 <body>
   <a class="skip-link" href="#main">Ir para o conteúdo</a>
   <div id="notice" role="status" aria-live="polite" hidden></div>
   <section id="auth" class="auth-screen" aria-label="Acesso à conta">
     <div class="auth-container">
-      <img class="auth-brand" src="icons/brand-nunes.svg" alt="" aria-hidden="true">
+      <img class="auth-brand auth-brand-light" src="icons/brand-nunes.svg" alt="" aria-hidden="true"><img class="auth-brand auth-brand-dark" src="icons/brand-nunes-dark.svg" alt="" aria-hidden="true">
       <p class="slogan">Finanças organizadas. Decisões mais claras.</p>
       <div class="login-box">
         <div class="login-heading"><span class="eyebrow">Bem-vindo</span><h1>Sistema Financeiro</h1><p>Entre para acompanhar receitas, despesas e compromissos em um só lugar.</p></div>
@@ -58,7 +58,7 @@
     <div class="app-shell">
       <aside id="desktopSidebar" class="desktop-sidebar" aria-label="Navegação principal">
         <div class="sidebar-brand-row">
-          <div class="sidebar-brand"><span class="brand-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1276.31 1276.31" aria-hidden="true" focusable="false"><path fill="#5FB88A" d="M0 0h1101.99c95.87 0 174.32 78.45 174.32 174.32v927.67c0 95.87-78.45 174.32-174.32 174.32H174.32C78.44 1276.31 0 1197.86 0 1101.99V0z"/><path fill="#fff" d="M387.83 247.89h446.35c14.26 0 26.09 11.78 26.09 26.17v106.4c0 14.39-11.83 26.17-26.09 26.17H513.69l348.62 373.09V468.15c0-14.53 11.78-26.25 26.17-26.25h106.4c14.39 0 26.17 11.73 26.17 26.25v534.02c0 14.53-11.78 26.25-26.17 26.25h-106.4c-8.5 0-16.09-4.09-20.88-10.44L414 532.37V804.8c0 14.44-11.78 26.1-26.17 26.1h-106.4c-14.39 0-26.17-11.66-26.17-26.1V273.99c0-14.44 11.78-26.1 26.17-26.1h106.4z"/></svg></span><strong class="sidebar-label">Meu Financeiro</strong></div>
+          <button type="button" class="sidebar-brand sidebar-home" data-page="inicio" aria-label="Ir para o início"><span class="brand-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1276.31 1276.31" aria-hidden="true" focusable="false"><path fill="#5FB88A" d="M0 0h1101.99c95.87 0 174.32 78.45 174.32 174.32v927.67c0 95.87-78.45 174.32-174.32 174.32H174.32C78.44 1276.31 0 1197.86 0 1101.99V0z"/><path fill="#fff" d="M387.83 247.89h446.35c14.26 0 26.09 11.78 26.09 26.17v106.4c0 14.39-11.83 26.17-26.09 26.17H513.69l348.62 373.09V468.15c0-14.53 11.78-26.25 26.17-26.25h106.4c14.39 0 26.17 11.73 26.17 26.25v534.02c0 14.53-11.78 26.25-26.17 26.25h-106.4c-8.5 0-16.09-4.09-20.88-10.44L414 532.37V804.8c0 14.44-11.78 26.1-26.17 26.1h-106.4c-14.39 0-26.17-11.66-26.17-26.1V273.99c0-14.44 11.78-26.1 26.17-26.1h106.4z"/></svg></span><strong class="sidebar-label">Meu Financeiro</strong></button>
           <button id="sidebarCollapse" class="icon-button sidebar-collapse" type="button" aria-label="Recolher menu lateral" aria-pressed="false"><i data-lucide="panel-left-close" aria-hidden="true"></i></button>
         </div>
         <nav class="sidebar-nav">
@@ -103,11 +103,14 @@
               <p>Desempenho do período em uma leitura rápida.</p>
             </div>
             <div class="dashboard-period" aria-label="Período da análise">
-              <button type="button" id="openNotes" class="dashboard-notes-button" aria-haspopup="dialog" aria-controls="notesDialog"><i data-lucide="notebook-pen" aria-hidden="true"></i><span>Anotações</span></button>
-              <div class="period-mode" role="group" aria-label="Tipo de período">
-                <button type="button" data-period-mode="month" aria-pressed="true">Mensal</button>
-                <button type="button" data-period-mode="year" aria-pressed="false">Anual</button>
+              <div class="period-controls">
+                <button id="openNotesDialog" class="notes-button" type="button" aria-label="Abrir anotações" title="Anotações"><i data-lucide="notebook-pen" aria-hidden="true"></i><span>Anotações</span></button>
               </div>
+                <div class="period-mode" role="group" aria-label="Tipo de período">
+                  <button type="button" data-period-mode="month" aria-pressed="true">Mensal</button>
+                  <button type="button" data-period-mode="year" aria-pressed="false">Anual</button>
+                </div>
+                
               <div class="period-inputs">
                 <label class="sr-only" for="monthFilter">Mês da análise</label>
                 <input id="monthFilter" type="month" required>
@@ -199,7 +202,6 @@
             </section>
           </div>
 
-
         </section>
 
         <section id="page-receitas" class="page statement-page" hidden>
@@ -286,6 +288,30 @@
       <button type="button" data-page="configuracoes" aria-label="Configurações"><i data-lucide="settings-2" aria-hidden="true"></i><span>Ajustes</span></button>
     </nav>
   </div>
+  <dialog id="updateGuideDialog" class="update-guide-dialog" aria-labelledby="updateGuideTitle">
+    <div class="update-guide-head">
+      <div><span class="eyebrow">Nova versão</span><h2 id="updateGuideTitle">Conheça as principais mudanças</h2><p>O sistema ficou mais simples para acompanhar, registrar e conferir suas finanças no dia a dia.</p></div>
+      <button type="button" id="closeUpdateGuide" class="icon-button" aria-label="Fechar guia"><i data-lucide="x" aria-hidden="true"></i></button>
+    </div>
+    <div class="update-guide-assurance"><i data-lucide="shield-check" aria-hidden="true"></i><div><strong>Seus dados continuam preservados</strong><span>Seu login, histórico, receitas, despesas, economia e anotações permanecem na sua conta.</span></div></div>
+    <div class="update-guide-grid">
+      <article><span class="update-guide-icon"><i data-lucide="layout-dashboard" aria-hidden="true"></i></span><div><strong>Nova visão geral</strong><p>Saldo, receitas, despesas, fluxo e análise agora ficam organizados em um painel mais direto.</p></div></article>
+      <article><span class="update-guide-icon"><i data-lucide="calendar-range" aria-hidden="true"></i></span><div><strong>Mensal ou anual</strong><p>Troque rapidamente o período da análise no topo do painel e acompanhe o cenário que quiser.</p></div></article>
+      <article><span class="update-guide-icon"><i data-lucide="list-filter" aria-hidden="true"></i></span><div><strong>Receitas e despesas mais claras</strong><p>As telas ganharam filtros, busca e uma leitura melhor do que está previsto, recebido, pago ou pendente.</p></div></article>
+      <article><span class="update-guide-icon"><i data-lucide="circle-check-big" aria-hidden="true"></i></span><div><strong>Pagamentos organizados</strong><p>Ao registrar uma despesa como paga, ela sai dos pendentes e vai para a área de Pagos.</p></div></article>
+      <article><span class="update-guide-icon"><i data-lucide="notebook-pen" aria-hidden="true"></i></span><div><strong>Anotações no topo</strong><p>Suas anotações agora ficam em um modal próprio, acessado ao lado de Mensal e Anual.</p></div></article>
+      <article><span class="update-guide-icon"><i data-lucide="panel-left" aria-hidden="true"></i></span><div><strong>Navegação mais simples</strong><p>No computador, use o menu lateral. No celular, as principais áreas continuam sempre acessíveis na barra inferior.</p></div></article>
+    </div>
+    <div class="update-guide-actions"><button type="button" id="finishUpdateGuide" class="primary">Começar a usar</button></div>
+  </dialog>
+  <dialog id="notesDialog" class="notes-dialog" aria-labelledby="notesDialogTitle">
+    <div class="dialog-heading"><div><span class="eyebrow">Apoio</span><h2 id="notesDialogTitle">Anotações</h2></div><button type="button" id="closeNotesDialog" class="icon-button" aria-label="Fechar anotações"><i data-lucide="x" aria-hidden="true"></i></button></div>
+    <form id="noteForm">
+      <label for="noteText">Nova anotação</label>
+      <div class="note-input"><input id="noteText" name="text" maxlength="1000" required><button class="primary" type="submit">Adicionar</button></div>
+    </form>
+    <div class="notes-scroll"><ul id="notesList" class="entry-list"></ul></div>
+  </dialog>
   <dialog id="dashboardDetailDialog" aria-labelledby="dashboardDetailTitle">
     <div class="dialog-heading"><div><span id="dashboardDetailEyebrow" class="eyebrow">Resumo</span><h2 id="dashboardDetailTitle">Detalhes</h2></div><button type="button" id="closeDashboardDetail" class="icon-button" aria-label="Fechar detalhes"><i data-lucide="x" aria-hidden="true"></i></button></div>
     <div id="dashboardDetailBody" class="dashboard-detail-body"></div>
@@ -296,7 +322,12 @@
         <input id="dashboardExpenseMonth" type="month">
       </div>
       <div id="dashboardExpenseDetailSummary" class="dashboard-expense-detail-summary"></div>
+      <div class="dashboard-expense-list-title"><span>Pendentes</span><strong id="dashboardExpensePendingCount">0</strong></div>
       <ul id="dashboardExpenseDetailList" class="dashboard-expense-detail-list"></ul>
+      <details id="dashboardExpensePaid" class="dashboard-expense-paid" hidden>
+        <summary><span>Pagos</span><strong id="dashboardExpensePaidCount">0</strong></summary>
+        <ul id="dashboardExpensePaidList" class="dashboard-expense-detail-list dashboard-expense-paid-list"></ul>
+      </details>
     </section>
     <div class="form-actions">
       <button type="button" id="dashboardDetailAction" class="primary">Abrir seção</button>
@@ -337,12 +368,11 @@
     </form>
   </dialog>
   <dialog id="settleDialog" aria-labelledby="settleTitle"><form id="settleForm"><h2 id="settleTitle">Registrar pagamento</h2><p id="settleSummary" class="muted"></p><label for="settleValue">Valor desta baixa (R$)</label><input type="number" id="settleValue" min="0.01" step="0.01" inputmode="decimal" required><label for="settleDate">Data efetiva</label><input type="date" id="settleDate" required><div id="paymentHistory" class="payment-history"></div><p id="settleError" role="alert"></p><div class="form-actions"><button type="button" id="cancelSettle">Cancelar</button><button type="submit" class="primary">Registrar</button></div></form></dialog>
-  <dialog id="notesDialog" class="notes-dialog" aria-labelledby="notesTitle"><div class="dialog-heading"><div><span class="eyebrow">Apoio</span><h2 id="notesTitle">Anotações</h2></div><button type="button" id="closeNotes" class="soft" aria-label="Fechar anotações"><i data-lucide="x" aria-hidden="true"></i></button></div><p class="muted">Consulte e organize suas anotações.</p><form id="noteForm"><label for="noteText">Nova anotação</label><div class="note-input"><input id="noteText" name="text" maxlength="1000" required><button class="primary" type="submit">Adicionar</button></div></form><ul id="notesList" class="entry-list"></ul></dialog>
   <dialog id="clearDialog" aria-labelledby="clearTitle"><form id="clearForm"><h2 id="clearTitle">Apagar dados financeiros?</h2><p>Esta ação remove todas as receitas, despesas, movimentações de economia e anotações da conta.</p><label for="clearConfirmation">Digite APAGAR para confirmar</label><input id="clearConfirmation" required pattern="APAGAR" autocomplete="off"><p id="clearError" role="alert"></p><div class="form-actions"><button type="button" id="cancelClear">Cancelar</button><button type="submit" class="danger">Apagar definitivamente</button></div></form></dialog>
   <noscript>Ative o JavaScript para acessar o sistema financeiro.</noscript>
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script>window.lucide?.createIcons();</script>
-  <script type="module" src="js/app.js?v=26"></script>
-  <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js?v=26").catch(()=>{}));}</script>
+  <script type="module" src="js/app.js?v=28"></script>
+  <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js?v=28").catch(()=>{}));}</script>
 </body>
 </html>

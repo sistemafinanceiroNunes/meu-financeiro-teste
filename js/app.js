@@ -1,7 +1,5 @@
 import {today,money,displayDate,cents,validDate,makeEntry,normalize,summarize,occurrencesFor,economyBalance} from './finance.js';
 const $ = id => document.getElementById(id);
-$('openNotes').addEventListener('click',()=>{$('notesDialog').showModal();$('noteText').focus();});
-$('closeNotes').addEventListener('click',()=>$('notesDialog').close());
 const state = {uid:null,data:normalize(),ready:false,profile:{},unsubscribe:null,session:0,editing:null,dirty:false,writing:false,settling:null,customMonths:[],clearRevision:0,currentPage:'inicio',visitedPages:new Set(),dashboardAnimated:false,metricAnimationToken:0,connectionNotified:false,dashboardPeriodMode:'month',incomeVisibleCount:30};
 let repository, noticeTimer;
 const stored = (key,fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
@@ -59,6 +57,17 @@ function applyAppearance(){
   $('themeToggle').setAttribute('aria-pressed',String(dark));$('themeToggle').setAttribute('aria-label',dark?'Ativar tema claro':'Ativar tema escuro');$('themeToggle').title=dark?'Tema claro':'Tema escuro';
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?'#0f100f':'#f7f7f5');
 }
+const UPDATE_GUIDE_VERSION='redesign-2026-10';
+const updateGuideKey=uid=>`updateGuideSeen:${UPDATE_GUIDE_VERSION}:${uid}`;
+function markUpdateGuideSeen(){if(state.uid)remember(updateGuideKey(state.uid),'true');}
+function closeUpdateGuide(){markUpdateGuideSeen();if($('updateGuideDialog').open)$('updateGuideDialog').close();}
+function maybeShowUpdateGuide(){
+  if(!state.uid||stored(updateGuideKey(state.uid),'false')==='true'||$('updateGuideDialog').open)return;
+  requestAnimationFrame(()=>{if(state.uid&&stored(updateGuideKey(state.uid),'false')!=='true'&&!$('updateGuideDialog').open)$('updateGuideDialog').showModal();});
+}
+$('closeUpdateGuide').addEventListener('click',closeUpdateGuide);
+$('finishUpdateGuide').addEventListener('click',closeUpdateGuide);
+$('updateGuideDialog').addEventListener('cancel',event=>{event.preventDefault();closeUpdateGuide();});
 const savedTheme=stored('temaSolon','claro'),savedFont=stored('fonteSolon','Urbanist, sans-serif');$('themeSelect').value=['claro','escuro'].includes(savedTheme)?savedTheme:'claro';$('fontSelect').value=[...$('fontSelect').options].some(option=>option.value===savedFont)?savedFont:'Urbanist, sans-serif';applyAppearance();
 $('themeSelect').addEventListener('change',()=>{remember('temaSolon',$('themeSelect').value);applyAppearance();});
 $('themeToggle').addEventListener('click',async()=>{
@@ -268,16 +277,22 @@ function defaultExpenseDetailMonth(period){
   if(period.mode==='month')return period.value;const current=today().slice(0,7);return current.startsWith(`${period.value}-`)?current:`${period.value}-01`;
 }
 function renderExpenseModalDetails(){
-  const month=$('dashboardExpenseMonth').value,target=$('dashboardExpenseDetailList');target.replaceChildren();if(!/^\d{4}-\d{2}$/.test(month)){return;}
+  const month=$('dashboardExpenseMonth').value,pendingTarget=$('dashboardExpenseDetailList'),paidTarget=$('dashboardExpensePaidList'),paidSection=$('dashboardExpensePaid'),paidWasOpen=paidSection.open;
+  pendingTarget.replaceChildren();paidTarget.replaceChildren();if(!/^\d{4}-\d{2}$/.test(month)){return;}
   const rows=occurrencesFor(state.data,month).filter(row=>row.collection==='despesas').sort((a,b)=>a.date.localeCompare(b.date)||a.name.localeCompare(b.name,'pt-BR'));
-  const planned=rows.reduce((sum,row)=>sum+row.cents,0),paid=rows.reduce((sum,row)=>sum+row.paymentCents,0);
+  const pendingRows=rows.filter(row=>!row.settled),paidRows=rows.filter(row=>row.settled),planned=rows.reduce((sum,row)=>sum+row.cents,0),paid=rows.reduce((sum,row)=>sum+row.paymentCents,0);
   $('dashboardExpenseDetailSummary').textContent=`${rows.length} item(ns) · ${money(planned)} previstos · ${money(paid)} pagos`;
-  if(!rows.length){target.append(node('li','Nenhuma despesa neste mês.','dashboard-expense-detail-empty'));return;}
-  for(const row of rows){
-    const li=node('li',undefined,'dashboard-expense-detail-item'),copy=node('div'),value=node('div',undefined,'dashboard-expense-detail-value');
-    copy.append(node('strong',row.name),node('small',`${row.category||'Despesa'} · ${displayDate(row.date)} · ${row.settled?'Pago':row.partial?'Parcial':'Pendente'}`));
-    value.append(node('strong',money(row.cents)),node('small',row.paymentCents?`Pago ${money(row.paymentCents)}`:`A pagar ${money(row.outstandingCents)}`));li.append(copy,value);target.append(li);
-  }
+  $('dashboardExpensePendingCount').textContent=String(pendingRows.length);$('dashboardExpensePaidCount').textContent=String(paidRows.length);paidSection.hidden=!paidRows.length;paidSection.open=paidRows.length?paidWasOpen:false;
+  const expenseItem=(row,isPaid=false)=>{
+    const li=node('li',undefined,`dashboard-expense-detail-item${isPaid?' is-paid':''}`),copy=node('div'),value=node('div',undefined,'dashboard-expense-detail-value');
+    copy.append(node('strong',row.name),node('small',`${row.category||'Despesa'} · ${displayDate(row.date)} · ${isPaid?'Pago':row.partial?'Parcial':'Pendente'}`));
+    value.append(node('strong',money(row.cents)),node('small',isPaid?`Pago ${money(row.paymentCents)}${row.settledDate?` · ${displayDate(row.settledDate)}`:''}`:row.paymentCents?`Pago ${money(row.paymentCents)} · resta ${money(row.outstandingCents)}`:`A pagar ${money(row.outstandingCents)}`));
+    if(!isPaid){const pay=action('Marcar como pago',()=>settle(row),`Marcar como pago: ${row.name}`);pay.className='dashboard-expense-detail-pay';value.append(pay);}
+    li.append(copy,value);return li;
+  };
+  if(!rows.length){pendingTarget.append(node('li','Nenhuma despesa neste mês.','dashboard-expense-detail-empty'));return;}
+  if(!pendingRows.length)pendingTarget.append(node('li','Nenhuma despesa pendente.','dashboard-expense-detail-empty'));else pendingRows.forEach(row=>pendingTarget.append(expenseItem(row)));
+  paidRows.forEach(row=>paidTarget.append(expenseItem(row,true)));
 }
 function setExpenseDetailsVisible(show){
   $('dashboardExpenseDetails').hidden=!show;$('dashboardDetailMore').textContent=show?'Ocultar detalhes':'Mais detalhes';if(show)renderExpenseModalDetails();
@@ -328,9 +343,10 @@ function render(){
   $('monthStatus').textContent=status;$('monthStatus').dataset.tone=tone;$('trendIcon').textContent=icon;$('monthDescription').textContent=description;
   renderReviewNotice();
   renderIncomeStatement();list('expenseList',state.data.despesas,e=>renderEntry(e,'despesas'),'Nenhuma despesa adicionada.');
+  if($('dashboardDetailDialog').open&&$('dashboardDetailDialog').dataset.kind==='despesas'&&!$('dashboardExpenseDetails').hidden)renderExpenseModalDetails();
   $('economyBalance').textContent=money(economyBalance(state.data));$('economyBalance').className=economyBalance(state.data)<0?'expense':'income';
   list('economyList',state.data.economia||[],renderEconomyItem,'Nenhuma movimentação na sua reserva.');
-  list('notesList',state.data.itens,item=>{const li=node('li',undefined,'note-item');li.append(node('span',item.text,'note-item-text'));const button=action('',()=>remove('itens',item),`Excluir anotação: ${item.text}`);button.className='note-delete-button';button.title='Excluir anotação';const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');for(const d of ['M3 6h18','M8 6V4h8v2','M19 6l-1 14H6L5 6','M10 11v5','M14 11v5']){const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',d);svg.append(path);}button.append(svg);li.append(button);return li;},'Nenhuma anotação.');
+  list('notesList',state.data.itens,item=>{const li=node('li');li.append(node('span',item.text));const actions=node('div',undefined,'row-actions');actions.append(action('Excluir',()=>remove('itens',item),`Excluir anotação: ${item.text}`));li.append(actions);return li;},'Nenhuma anotação.');
 }
 function renderEntry(entry,collection){
   const li=node('li'),head=node('div',undefined,'entry-heading');li.dataset.entryId=entry.id;li.tabIndex=-1;if(entry.pendingReview||(entry.mode==='legacy'&&entry.occurrences.some(p=>p.estimated)))li.classList.add('has-issue');head.append(node('strong',entry.name),node('span',money(entry.amountCents),`amount ${collection==='receitas'?'income':'expense'}`));li.append(head);
@@ -354,6 +370,9 @@ function renderEconomyItem(item){
   const actions=node('div',undefined,'row-actions');actions.append(action('Excluir',()=>remove('economia',item),`Excluir movimentação ${item.name}`));li.append(actions);return li;
 }
 async function remove(collection,entry){const label=collection==='itens'?'esta anotação':collection==='economia'?`a movimentação “${entry.name}”`:`“${entry.name}” e todas as suas competências`;if(!confirm(`Excluir ${label}?`))return;try{await write({type:'remove',collection,id:entry.id,expectedRevision:entry.revision});notify('Item excluído.');}catch(error){notify(errorMessage(error),true);}}
+$('openNotesDialog').addEventListener('click',()=>{$('notesDialog').showModal();requestAnimationFrame(()=>$('noteText').focus());});
+$('closeNotesDialog').addEventListener('click',()=>{if(!$('noteForm').dataset.busy)$('notesDialog').close();});
+$('notesDialog').addEventListener('cancel',e=>{if($('noteForm').dataset.busy)e.preventDefault();});
 $('noteForm').addEventListener('submit',async e=>{e.preventDefault();const text=$('noteText').value.trim();if(!text||state.writing)return;const id=crypto.randomUUID();const button=e.currentTarget.querySelector('button');button.disabled=true;$('noteText').disabled=true;try{await write({type:'add',collection:'itens',id,entry:{id,text}});$('noteText').value='';notify('Anotação salva.');}catch(error){notify(errorMessage(error),true);}finally{button.disabled=false;$('noteText').disabled=false;}});
 $('economyDate').value=today();
 $('economyForm').addEventListener('submit',e=>{e.preventDefault();const id=crypto.randomUUID();let value;try{value=cents($('economyValue').value);if(!$('economyName').value.trim())throw new Error('Informe o motivo da movimentação.');if(!validDate($('economyDate').value))throw new Error('Informe uma data válida.');}catch(error){$('economyError').textContent=errorMessage(error);return;}const entry={id,name:$('economyName').value.trim(),kind:$('economyKind').value,cents:value,date:$('economyDate').value,revision:0};formTask(e.currentTarget,'economyError',async()=>{await write({type:'add',collection:'economia',id,entry});e.currentTarget.reset();$('economyDate').value=today();notify('Movimentação da reserva salva.');});});
@@ -456,7 +475,7 @@ async function authChanged(user){
   $('senhaLogin').value='';$('senhaCadastro').value='';$('confirmaSenha').value='';
   if(!user){showAuth('loginForm');renderProfile();return;}
   showPage('inicio',{animate:false,focus:false});updateConnection();
-  state.unsubscribe=repository.watchFinance(user.uid,data=>{if(session!==state.session)return;state.data=data;state.ready=true;updateConnection();render();},error=>{if(session!==state.session)return;state.ready=false;$('connectionStatus').textContent=errorMessage(error);notify(errorMessage(error),true);});
+  state.unsubscribe=repository.watchFinance(user.uid,data=>{if(session!==state.session)return;state.data=data;state.ready=true;updateConnection();render();maybeShowUpdateGuide();},error=>{if(session!==state.session)return;state.ready=false;$('connectionStatus').textContent=errorMessage(error);notify(errorMessage(error),true);});
   try{const profile=await repository.getProfile(user.uid);if(session===state.session){state.profile=profile;const cloudTheme=['claro','escuro'].includes(profile.temaPadrao)?profile.temaPadrao:$('themeSelect').value;const cloudFont=[...$('fontSelect').options].some(option=>option.value===profile.fontePadrao)?profile.fontePadrao:$('fontSelect').value;$('themeSelect').value=cloudTheme||'claro';$('fontSelect').value=cloudFont||'Urbanist, sans-serif';remember('temaSolon',$('themeSelect').value);remember('fonteSolon',$('fontSelect').value);applyAppearance();renderProfile();if(!profile.nome||!profile.sobrenome)notify('Complete seu nome e sobrenome em Configurações.');}}catch(error){if(session===state.session)notify(errorMessage(error),true);}
 }
 try{repository=await import('./repository.js');repository.watchAuth(authChanged);}catch{ $('authLoading').hidden=true;$('authError').textContent='Não foi possível carregar o acesso. Verifique sua conexão e recarregue a página.'; }
