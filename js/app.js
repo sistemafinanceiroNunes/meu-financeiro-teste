@@ -399,7 +399,10 @@ function render(){
   renderNotes();
 }
 function renderNotes(){
+  const scroller=$('notesList').closest('.notes-scroll');
+  const previousScroll=scroller?.scrollTop||0;
   list('notesList',state.data.itens,item=>{const li=node('li');li.append(node('span',item.text));const actions=node('div',undefined,'row-actions');const deleteButton=action('Excluir',()=>askDeleteNote(item),`Excluir anotação: ${item.text}`);deleteButton.classList.add('note-delete-button');const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','18');svg.setAttribute('height','18');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML='<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/>';deleteButton.replaceChildren(svg);actions.append(deleteButton);li.append(actions);return li;},'Nenhuma anotação.');
+  if(scroller)scroller.scrollTop=previousScroll;
 }
 function renderEntry(entry,collection){
   const li=node('li'),head=node('div',undefined,'entry-heading');li.dataset.entryId=entry.id;li.tabIndex=-1;if(entry.pendingReview||(entry.mode==='legacy'&&entry.occurrences.some(p=>p.estimated)))li.classList.add('has-issue');head.append(node('strong',entry.name),node('span',money(entry.amountCents),`amount ${collection==='receitas'?'income':'expense'}`));li.append(head);
@@ -445,24 +448,12 @@ let notesPageScrollY=null;
 function lockNotesBackground(){
   if(notesPageScrollY!==null)return;
   notesPageScrollY=window.scrollY;
-  document.body.style.position='fixed';
-  document.body.style.top=`-${notesPageScrollY}px`;
-  document.body.style.left='0';
-  document.body.style.right='0';
-  document.body.style.width='100%';
+  document.documentElement.style.overflow='hidden';
 }
 function unlockNotesBackground(){
   if(notesPageScrollY===null)return;
-  const y=notesPageScrollY;notesPageScrollY=null;
-  document.body.style.position='';
-  document.body.style.top='';
-  document.body.style.left='';
-  document.body.style.right='';
-  document.body.style.width='';
-  const root=document.documentElement,previous=root.style.scrollBehavior;
-  root.style.scrollBehavior='auto';
-  window.scrollTo(0,y);
-  root.style.scrollBehavior=previous;
+  notesPageScrollY=null;
+  document.documentElement.style.overflow='';
 }
 $('openNotesDialog').addEventListener('click',()=>{lockNotesBackground();$('notesDialog').showModal();requestAnimationFrame(()=>$('noteText').focus({preventScroll:true}));});
 $('closeNotesDialog').addEventListener('click',()=>{if(!$('noteForm').dataset.busy)$('notesDialog').close();});
