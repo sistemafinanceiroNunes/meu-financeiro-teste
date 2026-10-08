@@ -396,6 +396,9 @@ function render(){
   if($('dashboardDetailDialog').open&&$('dashboardDetailDialog').dataset.kind==='despesas'&&!$('dashboardExpenseDetails').hidden)renderExpenseModalDetails();
   $('economyBalance').textContent=money(economyBalance(state.data));$('economyBalance').className=economyBalance(state.data)<0?'expense':'income';
   list('economyList',state.data.economia||[],renderEconomyItem,'Nenhuma movimentação na sua reserva.');
+  renderNotes();
+}
+function renderNotes(){
   list('notesList',state.data.itens,item=>{const li=node('li');li.append(node('span',item.text));const actions=node('div',undefined,'row-actions');const deleteButton=action('Excluir',()=>askDeleteNote(item),`Excluir anotação: ${item.text}`);deleteButton.classList.add('note-delete-button');const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','18');svg.setAttribute('height','18');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML='<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/>';deleteButton.replaceChildren(svg);actions.append(deleteButton);li.append(actions);return li;},'Nenhuma anotação.');
 }
 function renderEntry(entry,collection){
@@ -463,7 +466,7 @@ function unlockNotesBackground(){
 }
 $('openNotesDialog').addEventListener('click',()=>{lockNotesBackground();$('notesDialog').showModal();requestAnimationFrame(()=>$('noteText').focus({preventScroll:true}));});
 $('closeNotesDialog').addEventListener('click',()=>{if(!$('noteForm').dataset.busy)$('notesDialog').close();});
-$('notesDialog').addEventListener('close',unlockNotesBackground);
+$('notesDialog').addEventListener('close',()=>{unlockNotesBackground();if(state.ready)render();});
 $('notesDialog').addEventListener('cancel',e=>{if($('noteForm').dataset.busy)e.preventDefault();});
 $('noteForm').addEventListener('submit',async e=>{e.preventDefault();const text=$('noteText').value.trim();if(!text||state.writing)return;const id=crypto.randomUUID();const button=e.currentTarget.querySelector('button');button.disabled=true;$('noteText').disabled=true;try{await write({type:'add',collection:'itens',id,entry:{id,text}});$('noteText').value='';notify('Anotação salva.');}catch(error){notify(errorMessage(error),true);}finally{button.disabled=false;$('noteText').disabled=false;}});
 $('economyDate').value=today();
@@ -567,7 +570,7 @@ async function authChanged(user){
   $('senhaLogin').value='';$('senhaCadastro').value='';$('confirmaSenha').value='';
   if(!user){showAuth('loginForm');renderProfile();return;}
   showPage('inicio',{animate:false,focus:false});updateConnection();
-  state.unsubscribe=repository.watchFinance(user.uid,data=>{if(session!==state.session)return;state.data=data;state.ready=true;updateConnection();render();maybeStartProductTour();},error=>{if(session!==state.session)return;state.ready=false;$('connectionStatus').textContent=errorMessage(error);notify(errorMessage(error),true);});
+  state.unsubscribe=repository.watchFinance(user.uid,data=>{if(session!==state.session)return;state.data=data;state.ready=true;updateConnection();if($('notesDialog').open){renderNotes();}else{render();}maybeStartProductTour();},error=>{if(session!==state.session)return;state.ready=false;$('connectionStatus').textContent=errorMessage(error);notify(errorMessage(error),true);});
   try{const profile=await repository.getProfile(user.uid);if(session===state.session){state.profile=profile;const cloudTheme=['claro','escuro','margaridas'].includes(profile.temaPadrao)?profile.temaPadrao:$('themeSelect').value;const cloudFont=[...$('fontSelect').options].some(option=>option.value===profile.fontePadrao)?profile.fontePadrao:$('fontSelect').value;$('themeSelect').value=cloudTheme||'claro';$('fontSelect').value=cloudFont||'Urbanist, sans-serif';remember('temaSolon',$('themeSelect').value);remember('fonteSolon',$('fontSelect').value);applyAppearance();renderProfile();if(!profile.nome||!profile.sobrenome)notify('Complete seu nome e sobrenome em Configurações.');}}catch(error){if(session===state.session)notify(errorMessage(error),true);}
 }
 try{repository=await import('./repository.js');repository.watchAuth(authChanged);}catch{ $('authLoading').hidden=true;$('authError').textContent='Não foi possível carregar o acesso. Verifique sua conexão e recarregue a página.'; }
