@@ -300,3 +300,15 @@ button.dashboard-card:active{transform:scale(.992)}
   .dashboard-card-add span{display:none}
   .dashboard-card-add{width:32px;min-width:32px;padding:0}
 }
+
+/* Ajuste isolado: anotações e centralização dos painéis da visão geral */
+.dashboard-page .dashboard-grid{width:100%;margin-inline:auto}
+.dashboard-period .dashboard-notes-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:7px 12px;border:1px solid var(--line-strong);border-radius:11px;background:var(--surface);color:var(--text);font-size:11px;font-weight:600;box-shadow:var(--shadow-sm);white-space:nowrap}
+.dashboard-period .dashboard-notes-button:hover{background:var(--surface-soft);border-color:var(--accent);transform:none}
+.dashboard-period .dashboard-notes-button svg{width:15px;height:15px;flex-shrink:0}
+.notes-dialog{width:min(560px,calc(100% - 20px))}
+.notes-dialog .dialog-heading{margin-bottom:12px}
+.notes-dialog .dialog-heading h2{margin:0}
+.notes-dialog #closeNotes{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px}
+.notes-dialog .entry-list{margin-top:14px;max-height:42dvh;overflow:auto}
+@media(max-width:520px){.dashboard-period{flex-wrap:wrap;justify-content:flex-start;gap:7px}.dashboard-period .dashboard-notes-button{padding-inline:9px}.dashboard-period .period-mode{min-width:0}.dashboard-period .period-inputs{margin-left:0}}
