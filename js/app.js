@@ -396,7 +396,7 @@ function render(){
   if($('dashboardDetailDialog').open&&$('dashboardDetailDialog').dataset.kind==='despesas'&&!$('dashboardExpenseDetails').hidden)renderExpenseModalDetails();
   $('economyBalance').textContent=money(economyBalance(state.data));$('economyBalance').className=economyBalance(state.data)<0?'expense':'income';
   list('economyList',state.data.economia||[],renderEconomyItem,'Nenhuma movimentação na sua reserva.');
-  list('notesList',state.data.itens,item=>{const li=node('li');li.append(node('span',item.text));const actions=node('div',undefined,'row-actions');actions.append(action('Excluir',()=>remove('itens',item),`Excluir anotação: ${item.text}`));li.append(actions);return li;},'Nenhuma anotação.');
+  list('notesList',state.data.itens,item=>{const li=node('li');li.append(node('span',item.text));const actions=node('div',undefined,'row-actions');const deleteButton=action('Excluir',()=>askDeleteNote(item),`Excluir anotação: ${item.text}`);deleteButton.classList.add('note-delete-button');deleteButton.innerHTML='<i data-lucide="trash-2" aria-hidden="true"></i>';actions.append(deleteButton);li.append(actions);window.lucide?.createIcons({nodes:[li]});return li;},'Nenhuma anotação.');
 }
 function renderEntry(entry,collection){
   const li=node('li'),head=node('div',undefined,'entry-heading');li.dataset.entryId=entry.id;li.tabIndex=-1;if(entry.pendingReview||(entry.mode==='legacy'&&entry.occurrences.some(p=>p.estimated)))li.classList.add('has-issue');head.append(node('strong',entry.name),node('span',money(entry.amountCents),`amount ${collection==='receitas'?'income':'expense'}`));li.append(head);
