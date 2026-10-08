@@ -324,6 +324,12 @@ body.margaridas .topbar{background:color-mix(in srgb,var(--bg) 90%,transparent)}
 body.margaridas .login-box,body.margaridas .quadrant{box-shadow:0 8px 26px rgba(134,52,90,.08)}
 body.margaridas .brand-mark>span{background:#e6a54b}
 
+/* Mantém a visão geral imóvel enquanto Anotações estiver aberta. */
+html:has(.notes-dialog[open]){overflow:hidden;scrollbar-gutter:stable}
+body:has(.notes-dialog[open]){overflow:hidden}
+body:has(.notes-dialog[open]) .app-shell{overflow-anchor:none}
+.notes-dialog .notes-scroll{overscroll-behavior:contain;overflow-anchor:none}
+
 /* Janela ampliada de anotações e cartões compactos */
 .notes-dialog{height:min(82dvh,780px);max-height:calc(100dvh - 24px);display:flex;flex-direction:column;box-sizing:border-box}
 .notes-dialog:not([open]){display:none}
