@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=21">
+  <link rel="stylesheet" href="styles.css?v=22">
 </head>
 <body>
   <a class="skip-link" href="#main">Ir para o conteúdo</a>
@@ -106,6 +106,7 @@
               <div class="period-mode" role="group" aria-label="Tipo de período">
                 <button type="button" data-period-mode="month" aria-pressed="true">Mensal</button>
                 <button type="button" data-period-mode="year" aria-pressed="false">Anual</button>
+                <button type="button" id="openNotes" class="notes-trigger" aria-haspopup="dialog" aria-controls="notesDialog"><i data-lucide="notebook-pen" aria-hidden="true"></i>Anotações</button>
               </div>
               <div class="period-inputs">
                 <label class="sr-only" for="monthFilter">Mês da análise</label>
@@ -198,7 +199,7 @@
             </section>
           </div>
 
-          <section class="quadrant dashboard-notes"><div class="section-heading-inline"><div><span class="eyebrow">Apoio</span><h2>Anotações</h2></div></div><form id="noteForm"><label for="noteText">Nova anotação</label><div class="note-input"><input id="noteText" name="text" maxlength="1000" required><button class="primary" type="submit">Adicionar</button></div></form><ul id="notesList" class="entry-list"></ul></section>
+          
         </section>
 
         <section id="page-receitas" class="page statement-page" hidden>
@@ -336,11 +337,12 @@
     </form>
   </dialog>
   <dialog id="settleDialog" aria-labelledby="settleTitle"><form id="settleForm"><h2 id="settleTitle">Registrar pagamento</h2><p id="settleSummary" class="muted"></p><label for="settleValue">Valor desta baixa (R$)</label><input type="number" id="settleValue" min="0.01" step="0.01" inputmode="decimal" required><label for="settleDate">Data efetiva</label><input type="date" id="settleDate" required><div id="paymentHistory" class="payment-history"></div><p id="settleError" role="alert"></p><div class="form-actions"><button type="button" id="cancelSettle">Cancelar</button><button type="submit" class="primary">Registrar</button></div></form></dialog>
+  <dialog id="notesDialog" class="notes-dialog" aria-labelledby="notesTitle"><div class="dialog-heading"><div><span class="eyebrow">Apoio</span><h2 id="notesTitle">Anotações</h2></div><button id="closeNotes" type="button" class="soft" aria-label="Fechar anotações"><i data-lucide="x" aria-hidden="true"></i></button></div><p class="muted">Suas anotações financeiras em um só lugar.</p><form id="noteForm"><label for="noteText">Nova anotação</label><div class="note-input"><input id="noteText" name="text" maxlength="1000" required><button class="primary" type="submit">Adicionar</button></div></form><ul id="notesList" class="entry-list"></ul></dialog>
   <dialog id="clearDialog" aria-labelledby="clearTitle"><form id="clearForm"><h2 id="clearTitle">Apagar dados financeiros?</h2><p>Esta ação remove todas as receitas, despesas, movimentações de economia e anotações da conta.</p><label for="clearConfirmation">Digite APAGAR para confirmar</label><input id="clearConfirmation" required pattern="APAGAR" autocomplete="off"><p id="clearError" role="alert"></p><div class="form-actions"><button type="button" id="cancelClear">Cancelar</button><button type="submit" class="danger">Apagar definitivamente</button></div></form></dialog>
   <noscript>Ative o JavaScript para acessar o sistema financeiro.</noscript>
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script>window.lucide?.createIcons();</script>
-  <script type="module" src="js/app.js?v=21"></script>
+  <script type="module" src="js/app.js?v=22"></script>
   <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js?v=21").catch(()=>{}));}</script>
 </body>
 </html>
