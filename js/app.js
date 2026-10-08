@@ -432,11 +432,10 @@ function renderExpenseList(){
   list('expenseList',entries,entry=>renderEntry(entry,'despesas'),month===null?'Nenhuma despesa adicionada.':'Nenhuma despesa neste mês.');
 }
 $('expenseMonthFilter').value=state.expenseFilterMonth;
-$('expenseMonthFilter').addEventListener('change',()=>{
+$('expenseFilterApply').addEventListener('click',()=>{
   const month=$('expenseMonthFilter').value;
-  if(!/^\\d{4}-(0[1-9]|1[0-2])$/.test(month))return;
-  state.expenseFilterMonth=month;
-  if(state.ready)renderExpenseList();
+  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){notify('Selecione um mês e ano válidos.',true);return;}
+  setExpenseFilterMonth(month);
 });
 $('expenseFilterAll').addEventListener('click',()=>{
   state.expenseFilterMonth=null;
