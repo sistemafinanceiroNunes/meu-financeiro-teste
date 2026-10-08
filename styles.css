@@ -312,3 +312,16 @@ button.dashboard-card:active{transform:scale(.992)}
 .notes-dialog #closeNotes{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px}
 .notes-dialog .entry-list{margin-top:14px;max-height:42dvh;overflow:auto}
 @media(max-width:520px){.dashboard-period{flex-wrap:wrap;justify-content:flex-start;gap:7px}.dashboard-period .dashboard-notes-button{padding-inline:9px}.dashboard-period .period-mode{min-width:0}.dashboard-period .period-inputs{margin-left:0}}
+
+/* Ajustes exclusivos da janela de anotações */
+.notes-dialog{height:min(340px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);display:none;flex-direction:column;overflow:hidden}
+.notes-dialog[open]{display:flex}
+.notes-dialog .dialog-heading,.notes-dialog>p,.notes-dialog #noteForm{flex:0 0 auto}
+.notes-dialog #noteForm{margin-bottom:0}
+.notes-dialog #notesList{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;padding-right:5px;margin-bottom:0;align-content:start}
+.notes-dialog #notesList .note-item{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.notes-dialog .note-item-text{flex:1;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.notes-dialog .note-delete-button{flex:0 0 auto;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--line);background:var(--surface-soft);color:var(--muted);box-shadow:none}
+.notes-dialog .note-delete-button:hover{background:var(--expense-soft);color:var(--expense);border-color:var(--expense);transform:none}
+.notes-dialog .note-delete-button svg{width:16px;height:16px;stroke:currentColor}
+@media(max-width:520px){.notes-dialog{height:min(340px,calc(100dvh - 24px))}.notes-dialog #notesList{padding-right:3px}}
