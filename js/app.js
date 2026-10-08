@@ -396,7 +396,7 @@ function render(){
   if($('dashboardDetailDialog').open&&$('dashboardDetailDialog').dataset.kind==='despesas'&&!$('dashboardExpenseDetails').hidden)renderExpenseModalDetails();
   $('economyBalance').textContent=money(economyBalance(state.data));$('economyBalance').className=economyBalance(state.data)<0?'expense':'income';
   list('economyList',state.data.economia||[],renderEconomyItem,'Nenhuma movimentação na sua reserva.');
-  list('notesList',state.data.itens,item=>{const li=node('li');li.append(node('span',item.text));const actions=node('div',undefined,'row-actions');const deleteButton=action('Excluir',()=>askDeleteNote(item),`Excluir anotação: ${item.text}`);deleteButton.classList.add('note-delete-button');deleteButton.innerHTML='<i data-lucide="trash-2" aria-hidden="true"></i>';actions.append(deleteButton);li.append(actions);window.lucide?.createIcons({nodes:[li]});return li;},'Nenhuma anotação.');
+  list('notesList',state.data.itens,item=>{const li=node('li');li.append(node('span',item.text));const actions=node('div',undefined,'row-actions');const deleteButton=action('Excluir',()=>askDeleteNote(item),`Excluir anotação: ${item.text}`);deleteButton.classList.add('note-delete-button');const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','18');svg.setAttribute('height','18');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML='<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/>';deleteButton.replaceChildren(svg);actions.append(deleteButton);li.append(actions);return li;},'Nenhuma anotação.');
 }
 function renderEntry(entry,collection){
   const li=node('li'),head=node('div',undefined,'entry-heading');li.dataset.entryId=entry.id;li.tabIndex=-1;if(entry.pendingReview||(entry.mode==='legacy'&&entry.occurrences.some(p=>p.estimated)))li.classList.add('has-issue');head.append(node('strong',entry.name),node('span',money(entry.amountCents),`amount ${collection==='receitas'?'income':'expense'}`));li.append(head);
@@ -420,6 +420,24 @@ function renderEconomyItem(item){
   const actions=node('div',undefined,'row-actions');actions.append(action('Excluir',()=>remove('economia',item),`Excluir movimentação ${item.name}`));li.append(actions);return li;
 }
 async function remove(collection,entry){const label=collection==='itens'?'esta anotação':collection==='economia'?`a movimentação “${entry.name}”`:`“${entry.name}” e todas as suas competências`;if(!confirm(`Excluir ${label}?`))return;try{await write({type:'remove',collection,id:entry.id,expectedRevision:entry.revision});notify('Item excluído.');}catch(error){notify(errorMessage(error),true);}}
+let pendingNoteDelete=null;
+function askDeleteNote(item){
+  if(state.writing)return;
+  pendingNoteDelete=item;
+  $('confirmNoteDeleteDialog').showModal();
+}
+function closeNoteDelete(){if($('confirmNoteDelete').disabled)return;$('confirmNoteDeleteDialog').close();pendingNoteDelete=null;}
+$('cancelNoteDelete').addEventListener('click',closeNoteDelete);
+$('confirmNoteDeleteDialog').addEventListener('cancel',event=>{event.preventDefault();closeNoteDelete();});
+$('confirmNoteDelete').addEventListener('click',async()=>{
+  if(!pendingNoteDelete||state.writing)return;
+  const item=pendingNoteDelete,button=$('confirmNoteDelete');button.disabled=true;
+  try{
+    await write({type:'remove',collection:'itens',id:item.id,expectedRevision:item.revision});
+    $('confirmNoteDeleteDialog').close();pendingNoteDelete=null;notify('Anotação excluída.');
+  }catch(error){notify(errorMessage(error),true);}
+  finally{button.disabled=false;}
+});
 $('openNotesDialog').addEventListener('click',()=>{$('notesDialog').showModal();requestAnimationFrame(()=>$('noteText').focus());});
 $('closeNotesDialog').addEventListener('click',()=>{if(!$('noteForm').dataset.busy)$('notesDialog').close();});
 $('notesDialog').addEventListener('cancel',e=>{if($('noteForm').dataset.busy)e.preventDefault();});
