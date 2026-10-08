@@ -323,3 +323,16 @@ body.margaridas .auth-screen::after{background:#fff;opacity:.14}
 body.margaridas .topbar{background:color-mix(in srgb,var(--bg) 90%,transparent)}
 body.margaridas .login-box,body.margaridas .quadrant{box-shadow:0 8px 26px rgba(134,52,90,.08)}
 body.margaridas .brand-mark>span{background:#e6a54b}
+
+/* Janela ampliada de anotações e cartões compactos */
+.notes-dialog{height:min(82dvh,780px);max-height:calc(100dvh - 24px);display:flex;flex-direction:column;box-sizing:border-box}
+.notes-dialog:not([open]){display:none}
+.notes-dialog .notes-scroll{flex:1;min-height:0;max-height:none;overflow-y:auto}
+.notes-dialog #notesList li{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:38px;padding:8px 12px;margin-bottom:6px}
+.notes-dialog #notesList li>span{min-width:0;overflow-wrap:anywhere;flex:1}
+.notes-dialog #notesList .row-actions{margin-left:auto;flex-shrink:0}
+.notes-dialog .note-delete-button{display:inline-grid;place-items:center;width:32px;height:32px;padding:5px;border-radius:9px}
+.notes-dialog .note-delete-button svg{width:17px;height:17px}
+.note-confirm-dialog{width:min(390px,calc(100% - 28px))}
+.note-confirm-dialog .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+@media(max-width:520px){.notes-dialog{height:min(86dvh,780px)}}
