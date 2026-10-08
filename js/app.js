@@ -399,10 +399,29 @@ function render(){
   renderNotes();
 }
 function renderNotes(){
-  const scroller=$('notesList').closest('.notes-scroll');
-  const previousScroll=scroller?.scrollTop||0;
-  list('notesList',state.data.itens,item=>{const li=node('li');li.append(node('span',item.text));const actions=node('div',undefined,'row-actions');const deleteButton=action('Excluir',()=>askDeleteNote(item),`Excluir anotação: ${item.text}`);deleteButton.classList.add('note-delete-button');const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','18');svg.setAttribute('height','18');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML='<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/>';deleteButton.replaceChildren(svg);actions.append(deleteButton);li.append(actions);return li;},'Nenhuma anotação.');
-  if(scroller)scroller.scrollTop=previousScroll;
+  const target=$('notesList'),scroller=target.closest('.notes-scroll'),previousScroll=scroller.scrollTop;
+  const existing=new Map([...target.children].filter(el=>el.dataset.noteId).map(el=>[el.dataset.noteId,el]));
+  const rows=[];
+  for(const item of state.data.itens){
+    let li=existing.get(item.id);
+    if(!li){
+      const li=node('li');li.append(node('span',item.text));const actions=node('div',undefined,'row-actions');const deleteButton=action('Excluir',()=>askDeleteNote(item),`Excluir anotação: ${item.text}`);deleteButton.classList.add('note-delete-button');const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','18');svg.setAttribute('height','18');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML='<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v7m4-7v7"/>';deleteButton.replaceChildren(svg);actions.append(deleteButton);li.append(actions);li.dataset.noteId=item.id;
+    }
+    const label=li.querySelector('span');
+    if(label && label.textContent!==item.text)label.textContent=item.text;
+    rows.push(li);
+  }
+  if(!rows.length){
+    const empty=target.querySelector('.empty')||node('li','Nenhuma anotação.','empty');
+    target.replaceChildren(empty);
+  }else{
+    for(let i=0;i<rows.length;i++){
+      const current=target.children[i];
+      if(current!==rows[i])target.insertBefore(rows[i],current||null);
+    }
+    while(target.children.length>rows.length)target.lastElementChild.remove();
+  }
+  scroller.scrollTop=previousScroll;
 }
 function renderEntry(entry,collection){
   const li=node('li'),head=node('div',undefined,'entry-heading');li.dataset.entryId=entry.id;li.tabIndex=-1;if(entry.pendingReview||(entry.mode==='legacy'&&entry.occurrences.some(p=>p.estimated)))li.classList.add('has-issue');head.append(node('strong',entry.name),node('span',money(entry.amountCents),`amount ${collection==='receitas'?'income':'expense'}`));li.append(head);
@@ -432,7 +451,7 @@ function askDeleteNote(item){
   pendingNoteDelete=item;
   $('confirmNoteDeleteDialog').showModal();
 }
-function closeNoteDelete(){if($('confirmNoteDelete').disabled)return;$('confirmNoteDeleteDialog').close();pendingNoteDelete=null;}
+function closeNoteDelete(){if($('confirmNoteDelete').disabled)return;$('confirmNoteDeleteDialog').close();pendingNoteDelete=null;$('noteText').focus({preventScroll:true});}
 $('cancelNoteDelete').addEventListener('click',closeNoteDelete);
 $('confirmNoteDeleteDialog').addEventListener('cancel',event=>{event.preventDefault();closeNoteDelete();});
 $('confirmNoteDelete').addEventListener('click',async()=>{
@@ -440,7 +459,7 @@ $('confirmNoteDelete').addEventListener('click',async()=>{
   const item=pendingNoteDelete,button=$('confirmNoteDelete');button.disabled=true;
   try{
     await write({type:'remove',collection:'itens',id:item.id,expectedRevision:item.revision});
-    $('confirmNoteDeleteDialog').close();pendingNoteDelete=null;notify('Anotação excluída.');
+    $('confirmNoteDeleteDialog').close();pendingNoteDelete=null;$('noteText').focus({preventScroll:true});notify('Anotação excluída.');
   }catch(error){notify(errorMessage(error),true);}
   finally{button.disabled=false;}
 });
@@ -448,18 +467,18 @@ let notesPageScrollY=null;
 function lockNotesBackground(){
   if(notesPageScrollY!==null)return;
   notesPageScrollY=window.scrollY;
-  document.documentElement.style.overflow='hidden';
+  document.documentElement.classList.add('notes-open');
 }
 function unlockNotesBackground(){
   if(notesPageScrollY===null)return;
   notesPageScrollY=null;
-  document.documentElement.style.overflow='';
+  document.documentElement.classList.remove('notes-open');
 }
 $('openNotesDialog').addEventListener('click',()=>{lockNotesBackground();$('notesDialog').showModal();requestAnimationFrame(()=>$('noteText').focus({preventScroll:true}));});
 $('closeNotesDialog').addEventListener('click',()=>{if(!$('noteForm').dataset.busy)$('notesDialog').close();});
 $('notesDialog').addEventListener('close',()=>{unlockNotesBackground();if(state.ready)render();});
 $('notesDialog').addEventListener('cancel',e=>{if($('noteForm').dataset.busy)e.preventDefault();});
-$('noteForm').addEventListener('submit',async e=>{e.preventDefault();const text=$('noteText').value.trim();if(!text||state.writing)return;const id=crypto.randomUUID();const button=e.currentTarget.querySelector('button');button.disabled=true;$('noteText').disabled=true;try{await write({type:'add',collection:'itens',id,entry:{id,text}});$('noteText').value='';notify('Anotação salva.');}catch(error){notify(errorMessage(error),true);}finally{button.disabled=false;$('noteText').disabled=false;}});
+$('noteForm').addEventListener('submit',async e=>{e.preventDefault();const text=$('noteText').value.trim();if(!text||state.writing)return;const id=crypto.randomUUID();const button=e.currentTarget.querySelector('button');button.disabled=true;try{await write({type:'add',collection:'itens',id,entry:{id,text}});$('noteText').value='';notify('Anotação salva.');}catch(error){notify(errorMessage(error),true);}finally{button.disabled=false;}});
 $('economyDate').value=today();
 $('economyForm').addEventListener('submit',e=>{e.preventDefault();const id=crypto.randomUUID();let value;try{value=cents($('economyValue').value);if(!$('economyName').value.trim())throw new Error('Informe o motivo da movimentação.');if(!validDate($('economyDate').value))throw new Error('Informe uma data válida.');}catch(error){$('economyError').textContent=errorMessage(error);return;}const entry={id,name:$('economyName').value.trim(),kind:$('economyKind').value,cents:value,date:$('economyDate').value,revision:0};formTask(e.currentTarget,'economyError',async()=>{await write({type:'add',collection:'economia',id,entry});e.currentTarget.reset();$('economyDate').value=today();notify('Movimentação da reserva salva.');});});
 for(const button of document.querySelectorAll('[data-add]'))button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openEntry(button.dataset.add);});
