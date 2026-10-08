@@ -306,7 +306,7 @@ button.dashboard-card:active{transform:scale(.992)}
 .dashboard-period .dashboard-notes-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:7px 12px;border:1px solid var(--line-strong);border-radius:11px;background:var(--surface);color:var(--text);font-size:11px;font-weight:600;box-shadow:var(--shadow-sm);white-space:nowrap}
 .dashboard-period .dashboard-notes-button:hover{background:var(--surface-soft);border-color:var(--accent);transform:none}
 .dashboard-period .dashboard-notes-button svg{width:15px;height:15px;flex-shrink:0}
-.notes-dialog{width:min(560px,calc(100% - 20px))}
+.notes-dialog{width:min(640px,calc(100% - 20px))}
 .notes-dialog .dialog-heading{margin-bottom:12px}
 .notes-dialog .dialog-heading h2{margin:0}
 .notes-dialog #closeNotes{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px}
@@ -314,7 +314,7 @@ button.dashboard-card:active{transform:scale(.992)}
 @media(max-width:520px){.dashboard-period{flex-wrap:wrap;justify-content:flex-start;gap:7px}.dashboard-period .dashboard-notes-button{padding-inline:9px}.dashboard-period .period-mode{min-width:0}.dashboard-period .period-inputs{margin-left:0}}
 
 /* Ajustes exclusivos da janela de anotações */
-.notes-dialog{height:min(340px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);display:none;flex-direction:column;overflow:hidden}
+.notes-dialog{height:min(520px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);display:none;flex-direction:column;overflow:hidden}
 .notes-dialog[open]{display:flex}
 .notes-dialog .dialog-heading,.notes-dialog>p,.notes-dialog #noteForm{flex:0 0 auto}
 .notes-dialog #noteForm{margin-bottom:0}
@@ -324,4 +324,4 @@ button.dashboard-card:active{transform:scale(.992)}
 .notes-dialog .note-delete-button{flex:0 0 auto;width:34px;height:34px;min-height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--line);background:var(--surface-soft);color:var(--muted);box-shadow:none}
 .notes-dialog .note-delete-button:hover{background:var(--expense-soft);color:var(--expense);border-color:var(--expense);transform:none}
 .notes-dialog .note-delete-button svg{width:16px;height:16px;stroke:currentColor}
-@media(max-width:520px){.notes-dialog{height:min(340px,calc(100dvh - 24px))}.notes-dialog #notesList{padding-right:3px}}
+@media(max-width:520px){.notes-dialog{height:min(520px,calc(100dvh - 24px))}.notes-dialog #notesList{padding-right:3px}}
