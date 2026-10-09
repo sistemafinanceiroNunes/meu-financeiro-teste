@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=38">
+  <link rel="stylesheet" href="styles.css?v=39">
 </head>
 <body>
   <a class="skip-link" href="#main">Ir para o conteúdo</a>
@@ -341,12 +341,27 @@
       <p id="entryHelp" class="muted"></p>
       <label for="entryName">Descrição</label><input id="entryName" name="name" maxlength="160" required>
       <div class="form-grid">
-        <div><label for="entryMode">Modalidade</label><select id="entryMode" name="mode"><option value="single">Única</option><option value="installments">Parcelada (valor total)</option><option value="monthly">Mensal (valor por mês)</option><option value="custom">Personalizada (meses escolhidos)</option><option value="legacy" hidden>Calendário existente</option></select></div>
+        <div id="incomeModeField" hidden><label for="incomeMode">Modalidade da receita</label><select id="incomeMode"><option value="extra">Extra — meses escolhidos</option><option value="fixed">Fixa — todo mês, até alterar</option><option value="until">Fixa até — período definido</option><option value="single">Única (cadastro existente)</option><option value="installments">Parcelada (cadastro existente)</option></select></div>
+        <div id="genericModeField"><label for="entryMode">Modalidade</label><select id="entryMode" name="mode"><option value="single">Única</option><option value="installments">Parcelada (valor total)</option><option value="monthly">Mensal (valor por mês)</option><option value="custom">Personalizada (meses escolhidos)</option><option value="legacy" hidden>Calendário existente</option></select></div>
         <div><label id="valueLabel" for="entryValue">Valor (R$)</label><input id="entryValue" name="value" type="number" inputmode="decimal" min="0.01" step="0.01" required></div>
         <div><label id="dateLabel" for="entryDate">Data prevista</label><input id="entryDate" name="date" type="date" min="1900-01-01" max="9999-12-31" required></div>
         <div id="countField"><label for="entryCount">Quantidade de meses</label><input id="entryCount" name="count" type="number" min="1" max="360" step="1" value="1" required></div><div id="endDateField" hidden><label for="entryEndDate">Data final</label><input id="entryEndDate" name="endDate" type="date" min="1900-01-01" max="9999-12-31"></div>
         <div id="categoryField"><label for="entryCategory">Tipo de despesa</label><select id="entryCategory" name="category"><option>Fixa</option><option>Fixa até</option><option>Variável</option></select></div>
       </div>
+      <fieldset id="incomePeriodFields" class="income-period-fields" hidden>
+        <legend>Período da receita</legend>
+        <p id="incomePeriodHint" class="muted">Selecione os meses no calendário.</p>
+        <div id="incomePeriodSelections" class="income-period-selections"></div>
+        <div class="income-picker-anchor">
+          <button id="incomePeriodToggle" class="expense-period-toggle" type="button" aria-expanded="false" aria-controls="incomePeriodPicker"><i data-lucide="calendar-days" aria-hidden="true"></i><span id="incomePeriodLabel">Selecionar mês e ano</span><i data-lucide="chevron-down" aria-hidden="true"></i></button>
+          <div id="incomePeriodPicker" class="expense-period-picker" hidden>
+            <div class="expense-picker-head"><span>Selecionar mês</span><button id="incomeYearToggle" class="expense-year-toggle" type="button" aria-expanded="false"><span id="incomeYearLabel"></span><i data-lucide="chevron-down" aria-hidden="true"></i></button></div>
+            <div id="incomeYearOptions" class="expense-year-options" hidden></div>
+            <div id="incomeMonthOptions" class="expense-month-options"></div>
+          </div>
+        </div>
+        <div id="incomeChosenMonths" class="month-chip-list"></div>
+      </fieldset>
       <fieldset id="customDates" hidden>
         <legend>Competências escolhidas</legend>
         <div id="customExpenseRange" class="custom-expense-range" hidden>
@@ -373,7 +388,7 @@
   <noscript>Ative o JavaScript para acessar o sistema financeiro.</noscript>
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script>window.lucide?.createIcons();</script>
-  <script type="module" src="js/app.js?v=38"></script>
-  <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js?v=38").catch(()=>{}));}</script>
+  <script type="module" src="js/app.js?v=39"></script>
+  <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js?v=39").catch(()=>{}));}</script>
 </body>
 </html>
