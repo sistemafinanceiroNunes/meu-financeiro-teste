@@ -324,3 +324,21 @@ body.margaridas .auth-screen::after{background:#fff;opacity:.14}
 body.margaridas .topbar{background:color-mix(in srgb,var(--bg) 90%,transparent)}
 body.margaridas .login-box,body.margaridas .quadrant{box-shadow:0 8px 26px rgba(134,52,90,.08)}
 body.margaridas .brand-mark>span{background:#e6a54b}
+
+/* Despesas: filtro mensal e ações compactas adaptadas aos temas. */
+#page-despesas .expense-filter{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:18px 0 20px;padding:15px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--shadow-sm)}
+#page-despesas .expense-filter-field{display:grid;gap:7px;flex:1 1 190px;max-width:300px}
+#page-despesas .expense-filter-field label{font-size:12px;font-weight:700;color:var(--text)}
+#page-despesas .expense-filter-field input{width:100%;min-height:42px}
+#page-despesas .expense-filter button{min-height:42px;padding:10px 17px}
+#page-despesas .expense-filter-status{flex-basis:100%;font-size:12px;color:var(--muted)}
+#page-despesas .expense-entry{position:relative}
+#page-despesas .expense-entry .entry-heading .amount{font-size:clamp(17px,2.4vw,21px);font-weight:700;font-variant-numeric:tabular-nums}
+#page-despesas .expense-entry-actions{justify-content:flex-end;gap:8px;margin-top:8px}
+#page-despesas .expense-icon-action{width:38px;height:38px;min-height:38px;padding:8px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line-strong);border-radius:11px;background:var(--surface-soft);color:var(--text);transition:background .2s,border-color .2s,transform .2s}
+#page-despesas .expense-icon-action svg{width:18px;height:18px;stroke-width:1.9}
+#page-despesas .expense-icon-action:hover{background:var(--accent-soft);border-color:var(--accent);transform:translateY(-1px)}
+#page-despesas .expense-icon-delete{color:var(--expense)}
+#page-despesas .expense-icon-delete:hover{background:var(--expense-soft);border-color:var(--expense)}
+#page-despesas .expense-icon-action:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+@media(max-width:540px){#page-despesas .expense-filter-field{max-width:none;flex-basis:100%}#page-despesas .expense-filter button{flex:1}}
