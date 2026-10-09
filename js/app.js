@@ -547,13 +547,13 @@ document.addEventListener('click',e=>{if(!e.target.closest('.income-picker-ancho
 
 function openEntry(collection,entry=null){
   if(!state.ready){notify('Aguarde os dados carregarem.',true);return;}
-  state.editing={collection,entry:entry?structuredClone(entry):null,id:entry?.id||crypto.randomUUID()};state.dirty=false;state.customMonths=entry?.mode==='custom'?(entry.occurrences||[]).map(p=>p.date.slice(0,7)):[];
-  $('entryForm').reset();incomePeriodStart=entry?.firstDate?.slice(0,7)||today().slice(0,7);incomePeriodEnd=entry?.endDate?.slice(0,7)||'';incomePickerDraft=incomePeriodStart;$('customRangeStart').removeAttribute('max');$('customRangeEnd').removeAttribute('min');$('customRangeHint').textContent='Selecione o início e o fim.';renderCustomMonths();$('entryError').textContent='';$('entryTitle').textContent=`${entry?'Editar':'Adicionar'} ${collection==='receitas'?'receita':'despesa'}`;
+  state.editing={collection,entry:entry?structuredClone(entry):null,id:entry?.id||crypto.randomUUID()};state.dirty=false;state.customMonths=entry&&collection==='receitas'&&['single','custom'].includes(entry.mode)?(entry.occurrences||[]).map(p=>p.date.slice(0,7)):entry?.mode==='custom'?(entry.occurrences||[]).map(p=>p.date.slice(0,7)):[];
+  $('entryForm').reset();incomePeriodStart=entry?.firstDate?.slice(0,7)||today().slice(0,7);incomePeriodEnd=entry?.endDate?.slice(0,7)||entry?.occurrences?.at(-1)?.date?.slice(0,7)||'';incomePickerDraft=incomePeriodStart;$('customRangeStart').removeAttribute('max');$('customRangeEnd').removeAttribute('min');$('customRangeHint').textContent='Selecione o início e o fim.';renderCustomMonths();$('entryError').textContent='';$('entryTitle').textContent=`${entry?'Editar':'Adicionar'} ${collection==='receitas'?'receita':'despesa'}`;
   $('entryName').value=entry?.name||'';$('entryValue').value=entry ? (entry.amountCents/100).toFixed(2) : '';
   const legacy=entry?.mode==='legacy'&&!entry.pendingReview;
   $('entryMode').querySelector('[value=legacy]').hidden=!legacy;
   $('entryMode').value=legacy?'legacy':entry?.mode==='legacy'?'installments':entry?.mode||'single';
-  $('incomeMode').value=entry?.mode==='single'?'single':entry?.mode==='installments'?'installments':entry?.mode==='custom'?'extra':entry?.mode==='monthly'&&entry?.category==='Fixa até'?'until':'fixed';
+  $('incomeMode').value=entry?.mode==='single'||entry?.mode==='custom'?'extra':entry?.mode==='installments'||entry?.mode==='monthly'&&entry?.category==='Fixa até'?'until':'fixed';
   $('entryDate').value=entry?.firstDate||today();$('entryEndDate').value=entry?.endDate||entry?.occurrences?.at(-1)?.date||today();$('entryCount').value=entry?.count||1;$('entryCategory').value=entry?.category||'Fixa';$('categoryField').hidden=collection==='receitas';
   $('legacyDatesList').replaceChildren();
   if(legacy)entry.occurrences.forEach((p,i)=>{const label=node('label',`Vencimento ${i+1}`);label.htmlFor=`legacy-date-${i}`;const input=node('input');input.id=label.htmlFor;input.type='date';input.value=p.date;input.required=true;input.min='1900-01-01';input.max='9999-12-31';$('legacyDatesList').append(label,input);});
@@ -578,6 +578,20 @@ function updateEntryFields(){
 }
 function draftEntry(){
   const {entry,id}=state.editing;
+  const income=state.editing.collection==='receitas',convertSingle=income&&entry?.mode==='single'&&$('incomeMode').value==='extra',convertInstallments=income&&entry?.mode==='installments'&&$('incomeMode').value==='until';
+  if(entry&&(convertSingle||convertInstallments)){
+    const originalMonths=(entry.occurrences||[]).map(p=>p.date.slice(0,7)).sort();
+    const selectedMonths=convertSingle?[...state.customMonths].sort():customRangeMonths(incomePeriodStart,incomePeriodEnd);
+    const sameMonths=originalMonths.length===selectedMonths.length&&originalMonths.every((m,i)=>m===selectedMonths[i]);
+    if(sameMonths){
+      const preserved=structuredClone(entry);
+      preserved.name=$('entryName').value.trim();
+      if(convertSingle){preserved.mode='custom';preserved.category='Fixa';preserved.count=preserved.occurrences.length;}
+      else {preserved.mode='monthly';preserved.category='Fixa até';preserved.openEnded=false;preserved.endDate=preserved.occurrences.at(-1)?.date;preserved.count=preserved.occurrences.length;}
+      return preserved;
+    }
+    if(entry.occurrences.some(p=>(p.payments||[]).length))throw new Error('Existem recebimentos registrados. Mantenha os meses originais para preservar os valores e as baixas.');
+  }
   if(entry?.occurrences.some(p=>(p.payments||[]).length))return {...structuredClone(entry),name:$('entryName').value.trim(),category:$('entryCategory').value};
   if($('entryMode').value==='legacy'){
     const amount=cents($('entryValue').value),dates=[...$('legacyDatesList').querySelectorAll('input')].map(input=>input.value);
