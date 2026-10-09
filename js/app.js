@@ -247,30 +247,53 @@ function incomeStatementRows(){
     const rowStatus=incomeStatus(row).key;if(status!=='all'&&rowStatus!==status)return false;return true;
   }).sort((a,b)=>b.date.localeCompare(a.date)||a.name.localeCompare(b.name,'pt-BR'));
 }
+function incomeIconAction(label,entry){
+  const button=action('',()=>label==='Editar'?openEntry('receitas',entry):remove('receitas',entry),`${label} ${entry.name}`);
+  button.className=`expense-icon-action ${label==='Excluir'?'expense-icon-delete':'expense-icon-edit'}`;button.title=`${label} ${entry.name}`;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.9');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');
+  const paths=label==='Editar'?['M12 20h9','M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z','m15 5 4 4']:['M3 6h18','M8 6V4h8v2','M19 6l-1 14H6L5 6','M10 11v6','M14 11v6'];
+  for(const d of paths){const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',d);svg.append(path);}button.append(svg);return button;
+}
 function renderIncomeOccurrence(row){
-  const li=node('li');li.dataset.entryId=row.entryId;li.dataset.occurrenceId=row.id;
-  const main=node('div',undefined,'statement-row-main'),date=node('span',undefined,'statement-date'),day=row.estimated?'—':String(Number(row.date.slice(8,10))).padStart(2,'0'),monthLabel=new Intl.DateTimeFormat('pt-BR',{month:'short'}).format(new Date(Number(row.date.slice(0,4)),Number(row.date.slice(5,7))-1,1)).replace('.','');
-  date.append(node('strong',day),node('span',monthLabel));
-  const copy=node('span',undefined,'statement-copy');copy.append(node('strong',row.name),node('small',row.count>1?`${row.index}/${row.count} · ${displayDate(row.date)}`:displayDate(row.date)));
-  const value=node('span',undefined,'statement-value'),status=incomeStatus(row);value.append(node('strong',money(row.cents),'income'),node('span',status.label,`statement-status ${status.className}`));
-  main.append(date,copy,value);li.append(main);
-  const actions=node('div',undefined,'statement-row-actions'),receiveLabel=row.settled?'Ver recebimentos':row.partial?'Registrar outro recebimento':'Registrar recebimento';
-  const receive=action(receiveLabel,()=>settle(row),`${receiveLabel}: ${row.name}`);if(!row.settled)receive.classList.add('primary-mini');
-  const entry=state.data.receitas.find(item=>item.id===row.entryId),edit=action('Editar',()=>openEntry('receitas',entry),`Editar ${row.name}`);actions.append(edit,receive);li.append(actions);return li;
+  const line=node('div',undefined,'income-card-period');line.dataset.occurrenceId=row.id;
+  const details=node('div',undefined,'income-period-details'),status=incomeStatus(row);
+  const date=row.estimated?row.date.slice(0,7).split('-').reverse().join('/'):displayDate(row.date);
+  details.append(node('span',date,'income-period-date'),node('span',status.label,`statement-status ${status.className}`));
+  const side=node('div',undefined,'income-period-side');side.append(node('strong',money(row.cents),'income'));
+  const receiveLabel=row.settled?'Ver recebimentos':row.partial?'Registrar outro recebimento':'Registrar recebimento';
+  const receive=action(receiveLabel,()=>settle(row),`${receiveLabel}: ${row.name} em ${date}`);receive.className='income-receive-action';if(!row.settled)receive.classList.add('primary-mini');side.append(receive);
+  line.append(details,side);return line;
+}
+function renderIncomeCard(entry,rows){
+  const li=node('li');li.className='income-entry-card';li.dataset.entryId=entry.id;
+  const header=node('div',undefined,'income-card-header'),heading=node('div',undefined,'income-card-heading');
+  heading.append(node('strong',entry.name));
+  const type=entry.mode==='single'||entry.mode==='custom'?'Extra':entry.mode==='installments'||entry.category==='Fixa até'?'Fixa até':'Fixa';
+  const description=entry.openEnded?'Recebimento mensal sem data final':entry.mode==='installments'?'Parcelamento existente':entry.mode==='single'?'Mês único':`${rows.length} competência(s) exibida(s)`;
+  heading.append(node('span',`${type} · ${description}`,'income-card-subtitle'));
+  const tools=node('div',undefined,'income-card-tools');tools.append(incomeIconAction('Editar',entry),incomeIconAction('Excluir',entry));
+  header.append(heading,tools);li.append(header);
+  const periods=node('div',undefined,'income-card-periods');for(const row of rows)periods.append(renderIncomeOccurrence(row));li.append(periods);return li;
 }
 function renderIncomeReviewEntry(entry){
-  const li=node('li');li.dataset.entryId=entry.id;li.className='statement-review';const head=node('div',undefined,'statement-review-head');head.append(node('strong',entry.name),node('span','Revisão','statement-status partial'));li.append(head,node('p','Este cadastro precisa ter as competências confirmadas antes de entrar no extrato.'));
-  li.append(action('Revisar cadastro',()=>openEntry('receitas',entry),`Editar ${entry.name}`));return li;
+  const li=node('li');li.dataset.entryId=entry.id;li.className='income-entry-card statement-review';
+  const head=node('div',undefined,'income-card-header'),heading=node('div',undefined,'income-card-heading');
+  heading.append(node('strong',entry.name),node('span','Revisão pendente · confirme as competências','income-card-subtitle'));
+  const actions=node('div',undefined,'income-card-tools');actions.append(incomeIconAction('Editar',entry),incomeIconAction('Excluir',entry));head.append(heading,actions);li.append(head);return li;
 }
 function renderIncomeStatement(){
-  if(!state.ready)return;const rows=incomeStatementRows(),query=normalizedSearch($('incomeSearch').value),issues=state.data.receitas.filter(entry=>entry.pendingReview&&(query?normalizedSearch(entry.name).includes(query):true));
+  if(!state.ready)return;
+  const rows=incomeStatementRows(),query=normalizedSearch($('incomeSearch').value),issues=state.data.receitas.filter(entry=>entry.pendingReview&&(query?normalizedSearch(entry.name).includes(query):true));
   const planned=rows.reduce((sum,row)=>sum+row.cents,0),received=rows.reduce((sum,row)=>sum+row.paymentCents,0),pending=rows.reduce((sum,row)=>sum+row.outstandingCents,0);
   $('incomeStatementPlanned').textContent=money(planned);$('incomeStatementReceived').textContent=money(received);$('incomeStatementPending').textContent=money(pending);
-  const total=rows.length+issues.length;$('incomeResultCount').textContent=total===1?'1 lançamento':`${total} lançamentos`;
+  const groups=new Map();for(const row of rows){if(!groups.has(row.entryId))groups.set(row.entryId,[]);groups.get(row.entryId).push(row);}
+  const total=groups.size+issues.length;$('incomeResultCount').textContent=total===1?'1 receita':`${total} receitas`;
   const target=$('incomeList');target.replaceChildren();issues.forEach(entry=>target.append(renderIncomeReviewEntry(entry)));
-  rows.slice(0,state.incomeVisibleCount).forEach(row=>target.append(renderIncomeOccurrence(row)));
+  const visible=[...groups.entries()].slice(0,state.incomeVisibleCount);
+  for(const [id,group] of visible){const entry=state.data.receitas.find(item=>item.id===id);if(entry)target.append(renderIncomeCard(entry,group));}
   if(!total)target.append(node('li','Nenhuma receita encontrada para estes filtros.','empty'));
-  $('incomeLoadMore').hidden=rows.length<=state.incomeVisibleCount;const remaining=Math.max(0,rows.length-state.incomeVisibleCount);$('incomeLoadMore').textContent=`Carregar mais (${remaining} restantes)`;
+  $('incomeLoadMore').hidden=groups.size<=state.incomeVisibleCount;
+  const remaining=Math.max(0,groups.size-state.incomeVisibleCount);$('incomeLoadMore').textContent=`Carregar mais (${remaining} restantes)`;
 }
 function dashboardPeriod(){
   if(state.dashboardPeriodMode==='year'){
