@@ -504,7 +504,36 @@ function renderEconomyItem(item){
   head.append(node('strong',item.name),node('span',`${signed>=0?'+':'−'} ${money(Math.abs(signed))}`,`amount ${signed>=0?'income':'expense'}`));li.append(head,node('p',`${item.kind==='withdraw'?'Retirada':'Depósito'} · ${displayDate(item.date)}`));
   const actions=node('div',undefined,'row-actions');actions.append(action('Excluir',()=>remove('economia',item),`Excluir movimentação ${item.name}`));li.append(actions);return li;
 }
-async function remove(collection,entry){const label=collection==='itens'?'esta anotação':collection==='economia'?`a movimentação “${entry.name}”`:`“${entry.name}” e todas as suas competências`;if(!confirm(`Excluir ${label}?`))return;try{await write({type:'remove',collection,id:entry.id,expectedRevision:entry.revision});notify('Item excluído.');}catch(error){notify(errorMessage(error),true);}}
+let pendingDelete=null,deleteInProgress=false;
+function closeDeleteConfirm(){if(deleteInProgress)return;$('deleteConfirmDialog').close();pendingDelete=null;}
+function remove(collection,entry){
+  if(deleteInProgress)return;
+  pendingDelete={collection,id:entry.id,revision:entry.revision,name:entry.name};
+  const label=collection==='itens'?'esta anotação':collection==='economia'?'esta movimentação':collection==='receitas'?'esta receita':'esta despesa';
+  $('deleteConfirmTitle').textContent='Excluir '+label+'?';
+  $('deleteConfirmDescription').textContent=collection==='receitas'||collection==='despesas'
+    ?'Deseja excluir “'+entry.name+'” e todos os seus períodos e registros de '+(collection==='receitas'?'recebimento':'pagamento')+'? Esta ação não pode ser desfeita.'
+    :'Deseja excluir “'+(entry.name||'item')+'”? Esta ação não pode ser desfeita.';
+  $('deleteConfirmError').hidden=true;$('deleteConfirmError').textContent='';
+  $('deleteConfirmDialog').showModal();$('cancelDeleteConfirm').focus();
+}
+$('cancelDeleteConfirm').addEventListener('click',closeDeleteConfirm);
+$('deleteConfirmDialog').addEventListener('cancel',event=>{event.preventDefault();closeDeleteConfirm();});
+$('acceptDeleteConfirm').addEventListener('click',async()=>{
+  if(!pendingDelete||deleteInProgress)return;
+  const {collection,id,revision}=pendingDelete;deleteInProgress=true;
+  $('acceptDeleteConfirm').disabled=true;$('cancelDeleteConfirm').disabled=true;
+  $('acceptDeleteConfirm').textContent='Excluindo...';
+  try{
+    await write({type:'remove',collection,id,expectedRevision:revision});
+    $('deleteConfirmDialog').close();pendingDelete=null;notify('Item excluído com sucesso.');
+  }catch(error){
+    $('deleteConfirmError').textContent=errorMessage(error);$('deleteConfirmError').hidden=false;
+  }finally{
+    deleteInProgress=false;$('acceptDeleteConfirm').disabled=false;$('cancelDeleteConfirm').disabled=false;
+    $('acceptDeleteConfirm').textContent='Sim, excluir';
+  }
+});
 $('openNotesDialog').addEventListener('click',()=>{$('notesDialog').showModal();requestAnimationFrame(()=>$('noteText').focus());});
 $('closeNotesDialog').addEventListener('click',()=>{if(!$('noteForm').dataset.busy)$('notesDialog').close();});
 $('notesDialog').addEventListener('cancel',e=>{if($('noteForm').dataset.busy)e.preventDefault();});

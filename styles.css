@@ -423,3 +423,17 @@ body.dark #page-receitas .expense-icon-action,body.dark #page-receitas .expense-
 #page-receitas .income-receive-action{font-size:11px;min-height:34px;padding:7px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--surface-soft);color:var(--text)}
 #page-receitas .income-receive-action.primary-mini{background:var(--black);border-color:var(--black);color:var(--on-strong)}
 @media(max-width:420px){#page-receitas .income-card-period{align-items:flex-start}#page-receitas .income-receive-action{max-width:158px;line-height:1.25;white-space:normal}#page-receitas .income-card-heading>strong{font-size:14px}}
+
+/* Confirmação de exclusão própria do sistema */
+.delete-confirm-dialog{width:min(420px,calc(100% - 28px));padding:26px;border-radius:20px;text-align:center}
+.delete-confirm-symbol{width:54px;height:54px;margin:0 auto 14px;border-radius:16px;display:grid;place-items:center;background:var(--expense-soft);color:var(--expense)}
+.delete-confirm-symbol svg{width:25px;height:25px}
+.delete-confirm-dialog h2{font-size:20px;margin:0 0 10px;color:var(--text)}
+.delete-confirm-dialog p{font-size:13px;line-height:1.65;color:var(--muted);margin:0;overflow-wrap:anywhere}
+.delete-confirm-actions{display:flex;gap:10px;justify-content:center;margin-top:23px}
+.delete-confirm-actions button{flex:1;min-height:43px;border-radius:11px;font-weight:700}
+.delete-confirm-actions .delete-confirm-danger{background:var(--expense);border-color:var(--expense);color:#fff}
+.delete-confirm-actions .delete-confirm-danger:hover{filter:brightness(.94)}
+.delete-confirm-actions button:disabled{opacity:.55;cursor:wait}
+#deleteConfirmError:not([hidden]){margin-top:12px;color:var(--expense);font-weight:600}
+@media(max-width:380px){.delete-confirm-dialog{padding:20px}.delete-confirm-actions{flex-direction:column}}
