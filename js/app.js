@@ -466,7 +466,7 @@ function renderEntry(entry,collection){
     for(const [label,icon,handler] of [['Editar','book-open-pen',()=>openEntry(collection,entry)],['Excluir','trash-2',()=>remove(collection,entry)]]){
       const button=action('',handler,`${label} ${entry.name}`);button.className=`expense-icon-action ${label==='Excluir'?'expense-icon-delete':'expense-icon-edit'}`;button.title=`${label} ${entry.name}`;
       const glyph=document.createElementNS('http://www.w3.org/2000/svg','svg');glyph.setAttribute('viewBox','0 0 24 24');glyph.setAttribute('fill','none');glyph.setAttribute('stroke','currentColor');glyph.setAttribute('stroke-width','1.9');glyph.setAttribute('stroke-linecap','round');glyph.setAttribute('stroke-linejoin','round');glyph.setAttribute('aria-hidden','true');
-      const paths=label==='Editar'?['M4 19.5A2.5 2.5 0 0 1 6.5 17H20','M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z','m10 10 4-4 2 2-4 4-3 1 1-3Z']:['M3 6h18','M8 6V4h8v2','M19 6l-1 14H6L5 6','M10 11v6','M14 11v6'];
+      const paths=label==='Editar'?['M12 20h9','M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z','m15 5 4 4']:['M3 6h18','M8 6V4h8v2','M19 6l-1 14H6L5 6','M10 11v6','M14 11v6'];
       paths.forEach(d=>{const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',d);glyph.append(path);});button.append(glyph);actions.append(button);
     }
   }else actions.append(action('Editar',()=>openEntry(collection,entry),`Editar ${entry.name}`),action('Excluir',()=>remove(collection,entry),`Excluir ${entry.name}`));li.append(actions);return li;
