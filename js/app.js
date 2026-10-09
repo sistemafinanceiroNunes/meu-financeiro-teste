@@ -460,14 +460,16 @@ function render(){
 function renderEntry(entry,collection){
   const li=node('li'),head=node('div',undefined,'entry-heading');if(collection==='despesas')li.classList.add('expense-entry');li.dataset.entryId=entry.id;li.tabIndex=-1;if(entry.pendingReview||(entry.mode==='legacy'&&entry.occurrences.some(p=>p.estimated)))li.classList.add('has-issue');head.append(node('strong',entry.name),node('span',money(entry.amountCents),`amount ${collection==='receitas'?'income':'expense'}`));li.append(head);
   const occurrences=entry.occurrences;const modeLabel=entry.mode==='monthly'?'mensalidade(s) — valor por mês':entry.mode==='custom'?'competência(s) escolhida(s) — valor por competência':'parcela(s) — valor total';li.append(node('p',entry.pendingReview?'Revisão pendente: defina as datas para incluir nos totais.':entry.openEnded?`Mensal fixa · desde ${displayDate(entry.firstDate)} · sem data final`:entry.category==='Fixa até'?`Fixa até · ${entry.count} mês(es) · ${displayDate(entry.firstDate)} a ${displayDate(entry.endDate||occurrences.at(-1)?.date)}`:`${occurrences.length} ${modeLabel} · ${displayDate(occurrences[0]?.date)} a ${displayDate(occurrences.at(-1)?.date)}`));
-  if(entry.mode==='legacy'&&occurrences.some(p=>p.estimated))li.append(node('p','Dias de vencimento a confirmar; meses originais preservados.'));else if(occurrences.some(p=>p.estimated))li.append(node('p','Competências mensais preservadas do sistema anterior.'));
+  if(collection!=='despesas'){if(entry.mode==='legacy'&&occurrences.some(p=>p.estimated))li.append(node('p','Dias de vencimento a confirmar; meses originais preservados.'));else if(occurrences.some(p=>p.estimated))li.append(node('p','Competências mensais preservadas do sistema anterior.'));}
   const actions=node('div',undefined,'row-actions');if(collection==='despesas'){
     actions.classList.add('expense-entry-actions');
     for(const [label,icon,handler] of [['Editar','book-open-pen',()=>openEntry(collection,entry)],['Excluir','trash-2',()=>remove(collection,entry)]]){
       const button=action('',handler,`${label} ${entry.name}`);button.className=`expense-icon-action ${label==='Excluir'?'expense-icon-delete':'expense-icon-edit'}`;button.title=`${label} ${entry.name}`;
-      const glyph=document.createElement('i');glyph.dataset.lucide=icon;glyph.setAttribute('aria-hidden','true');button.append(glyph);actions.append(button);
+      const glyph=document.createElementNS('http://www.w3.org/2000/svg','svg');glyph.setAttribute('viewBox','0 0 24 24');glyph.setAttribute('fill','none');glyph.setAttribute('stroke','currentColor');glyph.setAttribute('stroke-width','1.9');glyph.setAttribute('stroke-linecap','round');glyph.setAttribute('stroke-linejoin','round');glyph.setAttribute('aria-hidden','true');
+      const paths=label==='Editar'?['M4 19.5A2.5 2.5 0 0 1 6.5 17H20','M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z','m10 10 4-4 2 2-4 4-3 1 1-3Z']:['M3 6h18','M8 6V4h8v2','M19 6l-1 14H6L5 6','M10 11v6','M14 11v6'];
+      paths.forEach(d=>{const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',d);glyph.append(path);});button.append(glyph);actions.append(button);
     }
-  }else actions.append(action('Editar',()=>openEntry(collection,entry),`Editar ${entry.name}`),action('Excluir',()=>remove(collection,entry),`Excluir ${entry.name}`));li.append(actions);if(collection==='despesas')window.lucide?.createIcons({nodes:actions.querySelectorAll('[data-lucide]')});return li;
+  }else actions.append(action('Editar',()=>openEntry(collection,entry),`Editar ${entry.name}`),action('Excluir',()=>remove(collection,entry),`Excluir ${entry.name}`));li.append(actions);return li;
 }
 function renderOccurrence(row){
   const li=node('li'),head=node('div',undefined,'entry-heading');head.append(node('strong',row.name),node('span',money(row.cents),`amount ${row.collection==='receitas'?'income':'expense'}`));li.append(head);
