@@ -268,7 +268,7 @@ function renderIncomeCard(entry,rows){
   const li=node('li');li.className='income-entry-card';li.dataset.entryId=entry.id;
   const header=node('div',undefined,'income-card-header'),heading=node('div',undefined,'income-card-heading');
   heading.append(node('strong',entry.name));
-  const type=entry.mode==='single'||entry.mode==='custom'?'Extra':entry.mode==='installments'||entry.category==='Fixa até'?'Fixa até':'Fixa';
+  const type=entry.mode==='custom-installments'?'Extra parcelada':entry.mode==='single'||entry.mode==='custom'?'Extra':entry.mode==='installments'||entry.category==='Fixa até'?'Fixa até':'Fixa';
   const description=entry.openEnded?'Recebimento mensal sem data final':entry.mode==='installments'?'Parcelamento existente':entry.mode==='single'?'Mês único':`${rows.length} competência(s) exibida(s)`;
   heading.append(node('span',`${type} · ${description}`,'income-card-subtitle'));
   const tools=node('div',undefined,'income-card-tools');tools.append(incomeIconAction('Editar',entry),incomeIconAction('Excluir',entry));
@@ -388,7 +388,7 @@ function openDashboardDetail(kind){
 }
 for(const card of document.querySelectorAll('[data-dashboard-detail]'))card.addEventListener('click',()=>openDashboardDetail(card.dataset.dashboardDetail));
 $('dashboardDetailMore').addEventListener('click',()=>setExpenseDetailsVisible($('dashboardExpenseDetails').hidden));$('dashboardExpenseMonth').addEventListener('change',renderExpenseModalDetails);
-$('closeDashboardDetail').addEventListener('click',()=>$('dashboardDetailDialog').close());$('dashboardDetailAction').addEventListener('click',()=>{const target=$('dashboardDetailAction').dataset.targetPage;if(target){$('dashboardDetailDialog').close();showPage(target);}});
+$('closeDashboardDetail').addEventListener('click',()=>$('dashboardDetailDialog').close());$('dashboardDetailAction').addEventListener('click',()=>{const target=$('dashboardDetailAction').dataset.targetPage;if(target){const period=dashboardPeriod();if(period?.mode==='month'){if(target==='receitas'){$('incomeMonthFilter').value=period.value;remember('incomeMonth',period.value);setIncomeScope('month',false);state.incomeVisibleCount=30;}else if(target==='despesas'){state.expenseFilterMonth=period.value;expenseDraftMonth=period.value;}}$('dashboardDetailDialog').close();showPage(target);if(target==='receitas')renderIncomeStatement();else if(target==='despesas'){renderExpenseList();updateExpenseFilterUI();}}});
 
 function reviewIssues(){
   const issues=[];
@@ -569,13 +569,13 @@ function renderIncomePeriod(){
   if(!state.editing||state.editing.collection!=='receitas')return;
   const type=$('incomeMode').value,selected=state.customMonths;
   const slots=$('incomePeriodSelections');slots.replaceChildren();
-  if(type!=='extra'){
+  if(type!=='extra'&&type!=='extra-total'){
     const start=action('Início: '+incomePeriodStart.split('-').reverse().join('/'),()=>{incomePickerDraft=incomePeriodStart;updateIncomePicker();setIncomePickerOpen(true);},'Selecionar início');
     start.className='income-period-slot';start.dataset.target='start';slots.append(start);
     if(type==='until'){const end=action('Fim: '+(incomePeriodEnd?incomePeriodEnd.split('-').reverse().join('/'):'Selecionar'),()=>{incomePickerDraft=incomePeriodEnd||incomePeriodStart;updateIncomePicker();setIncomePickerOpen(true);},'Selecionar fim');end.className='income-period-slot';end.dataset.target='end';slots.append(end);}
   }
-  $('incomeChosenMonths').hidden=type!=='extra';if(type==='extra')renderCustomMonths();
-  $('incomePeriodLabel').textContent=type==='extra'?'Adicionar mês':type==='until'?'Selecionar período':'Selecionar mês inicial';
+  $('incomeChosenMonths').hidden=!['extra','extra-total'].includes(type);if(['extra','extra-total'].includes(type))renderCustomMonths();
+  $('incomePeriodLabel').textContent=['extra','extra-total'].includes(type)?'Adicionar mês':type==='until'?'Selecionar período':'Selecionar mês inicial';
   updateIncomePicker();
 }
 let incomePickerTarget='start';
@@ -585,7 +585,7 @@ function updateIncomePicker(){
   const target=$('incomeMonthOptions');target.replaceChildren();
   expenseMonthNames.forEach((name,i)=>{const btn=node('button',name,'expense-month-option');btn.type='button';btn.classList.toggle('is-selected',i+1===month);btn.setAttribute('aria-pressed',String(i+1===month));btn.addEventListener('click',()=>{
     const chosen=year+'-'+String(i+1).padStart(2,'0');const type=$('incomeMode').value;
-    if(type==='extra'){if(!state.customMonths.includes(chosen))state.customMonths.push(chosen);state.customMonths.sort();}
+    if(type==='extra'||type==='extra-total'){if(!state.customMonths.includes(chosen))state.customMonths.push(chosen);state.customMonths.sort();}
     else if(type==='fixed'||incomePickerTarget==='start'){incomePeriodStart=chosen;if(type==='until'&&incomePeriodEnd&&incomePeriodEnd<chosen)incomePeriodEnd='';}
     else incomePeriodEnd=chosen;
     incomePickerDraft=chosen;state.dirty=true;setIncomePickerOpen(false);renderIncomePeriod();previewSchedule();
@@ -605,7 +605,7 @@ function openEntry(collection,entry=null){
   const legacy=entry?.mode==='legacy'&&!entry.pendingReview;
   $('entryMode').querySelector('[value=legacy]').hidden=!legacy;
   $('entryMode').value=legacy?'legacy':entry?.mode==='legacy'?'installments':entry?.mode||'single';
-  $('incomeMode').value=entry?.mode==='single'||entry?.mode==='custom'?'extra':entry?.mode==='installments'||entry?.mode==='monthly'&&entry?.category==='Fixa até'?'until':'fixed';
+  $('incomeMode').value=entry?.mode==='custom-installments'?'extra-total':entry?.mode==='single'||entry?.mode==='custom'?'extra':entry?.mode==='installments'||entry?.mode==='monthly'&&entry?.category==='Fixa até'?'until':'fixed';
   $('entryDate').value=entry?.firstDate||today();$('entryEndDate').value=entry?.endDate||entry?.occurrences?.at(-1)?.date||today();$('entryCount').value=entry?.count||1;$('entryCategory').value=entry?.category||'Fixa';$('categoryField').hidden=collection==='receitas';
   $('legacyDatesList').replaceChildren();
   if(legacy)entry.occurrences.forEach((p,i)=>{const label=node('label',`Vencimento ${i+1}`);label.htmlFor=`legacy-date-${i}`;const input=node('input');input.id=label.htmlFor;input.type='date';input.value=p.date;input.required=true;input.min='1900-01-01';input.max='9999-12-31';$('legacyDatesList').append(label,input);});
@@ -615,12 +615,12 @@ function openEntry(collection,entry=null){
 }
 function updateEntryFields(){
   const isIncome=state.editing?.collection==='receitas',incomeType=$('incomeMode').value;
-  if(isIncome){$('entryMode').value=incomeType==='extra'?'custom':incomeType==='single'||incomeType==='installments'?incomeType:'monthly';$('entryCategory').value=incomeType==='until'?'Fixa até':'Fixa';}
-  const mode=$('entryMode').value,settled=state.editing?.entry?.occurrences.some(p=>(p.payments||[]).length),legacy=mode==='legacy',custom=mode==='custom',collection=state.editing?.collection,category=collection==='receitas'?'Fixa':$('entryCategory').value,fixedMonthly=mode==='monthly'&&category==='Fixa',fixedUntil=mode==='monthly'&&category==='Fixa até';
-  $('valueLabel').textContent=(mode==='monthly'||custom)?'Valor por competência (R$)':mode==='single'?'Valor (R$)':'Valor total (R$)';$('dateLabel').textContent=mode==='single'?'Data prevista':'Primeiro vencimento';
+  if(isIncome){$('entryMode').value=incomeType==='extra'?'custom':incomeType==='extra-total'?'custom-installments':incomeType==='single'||incomeType==='installments'?incomeType:'monthly';$('entryCategory').value=incomeType==='until'?'Fixa até':'Fixa';}
+  const mode=$('entryMode').value,settled=state.editing?.entry?.occurrences.some(p=>(p.payments||[]).length),legacy=mode==='legacy',custom=mode==='custom'||mode==='custom-installments',collection=state.editing?.collection,category=collection==='receitas'?'Fixa':$('entryCategory').value,fixedMonthly=mode==='monthly'&&category==='Fixa',fixedUntil=mode==='monthly'&&category==='Fixa até';
+  $('valueLabel').textContent=(mode==='monthly'||mode==='custom')?'Valor por competência (R$)':mode==='single'?'Valor (R$)':'Valor total (R$)';$('dateLabel').textContent=mode==='single'?'Data prevista':'Primeiro vencimento';
   $('countField').hidden=mode==='single'||legacy||custom||fixedMonthly||fixedUntil;$('endDateField').hidden=!fixedUntil;$('legacyDates').hidden=!legacy;$('customDates').hidden=!custom;$('customExpenseRange').hidden=!(custom&&collection==='despesas');$('entryDate').parentElement.hidden=(isIncome&&incomeType!=='single'&&incomeType!=='installments')||legacy||custom;
   $('incomeModeField').hidden=!isIncome;$('genericModeField').hidden=isIncome;$('incomePeriodFields').hidden=!isIncome||incomeType==='single'||incomeType==='installments';$('customDates').hidden=!custom||isIncome;
-  if(isIncome&&incomeType!=='single'&&incomeType!=='installments'){$('entryDate').value=incomePeriodStart+'-01';if(incomeType==='until')$('entryEndDate').value=(incomePeriodEnd||incomePeriodStart)+'-01';$('endDateField').hidden=true;$('incomePeriodHint').textContent=incomeType==='extra'?'Escolha os meses em que receberá este valor.':incomeType==='fixed'?'Escolha o primeiro mês. A receita continuará mensalmente até você alterar.':'Escolha o primeiro e o último mês do período.';renderIncomePeriod();}
+  if(isIncome&&incomeType!=='single'&&incomeType!=='installments'){$('entryDate').value=incomePeriodStart+'-01';if(incomeType==='until')$('entryEndDate').value=(incomePeriodEnd||incomePeriodStart)+'-01';$('endDateField').hidden=true;$('incomePeriodHint').textContent=incomeType==='extra'?'Escolha os meses em que receberá este valor em cada competência.':incomeType==='extra-total'?'Informe o valor total e escolha os meses: o sistema dividirá o total entre eles.':incomeType==='fixed'?'Escolha o primeiro mês. A receita continuará mensalmente até você alterar.':'Escolha o primeiro e o último mês do período.';renderIncomePeriod();}
 
   for(const id of ['entryMode','entryValue','entryDate','entryEndDate','entryCount','customMonthInput','addCustomMonth','customRangeStart','customRangeEnd','addCustomRange'])$(id).disabled=!!settled||(legacy&&['entryDate','entryEndDate','entryCount'].includes(id));
   $('entryCount').required=mode==='installments'||(mode==='monthly'&&!fixedMonthly&&!fixedUntil);$('entryEndDate').required=fixedUntil&&!isIncome;$('entryDate').required=!legacy&&!custom&&(!isIncome||incomeType==='single'||incomeType==='installments');
