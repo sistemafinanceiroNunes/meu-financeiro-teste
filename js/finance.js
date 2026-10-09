@@ -55,11 +55,12 @@ export function schedule(total, count, firstDate, recurring = false) {
     payments:[], estimated:false
   }));
 }
-export function customSchedule(amount, months) {
+export function customSchedule(amount, months, distribute = false) {
   if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error('Valor inválido.');
   const unique = [...new Set((months || []).map(String))].sort();
   if (!unique.length || unique.length > 360) throw new Error('Selecione entre 1 e 360 competências.');
-  return unique.map((month,i)=>({id:`p${i+1}`,date:monthDate(month),cents:amount,payments:[],estimated:false}));
+  if (distribute && amount < unique.length) throw new Error('Cada parcela precisa ter ao menos R$ 0,01.');
+  return unique.map((month,i)=>({id:`p${i+1}`,date:monthDate(month),cents:distribute?Math.floor(amount/unique.length)+(i<amount%unique.length?1:0):amount,payments:[],estimated:false}));
 }
 function inclusiveMonthCount(startDate,endDate) {
   if (!validDate(startDate) || !validDate(endDate)) throw new Error('Informe um intervalo de datas válido.');
@@ -80,10 +81,10 @@ function recurringOccurrence(entry, month) {
 export function makeEntry({id, name, value, date, endDate, count, mode, category='Fixa', revision=0, months=[]}) {
   const trimmed = name.trim();
   if (!trimmed || trimmed.length > 160) throw new Error('Informe um nome com até 160 caracteres.');
-  if (!['single','installments','monthly','custom'].includes(mode)) throw new Error('Modalidade inválida.');
+  if (!['single','installments','monthly','custom','custom-installments'].includes(mode)) throw new Error('Modalidade inválida.');
   const amount = cents(value);
-  if (mode === 'custom') {
-    const occurrences = customSchedule(amount,months);
+  if (mode === 'custom' || mode === 'custom-installments') {
+    const occurrences = customSchedule(amount,months,mode === 'custom-installments');
     return {id,name:trimmed,mode,category,amountCents:amount,firstDate:occurrences[0].date,count:occurrences.length,revision,pendingReview:false,occurrences};
   }
   if (mode==='monthly' && category==='Fixa') {
