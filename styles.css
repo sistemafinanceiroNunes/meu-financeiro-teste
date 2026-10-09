@@ -372,3 +372,20 @@ body.margaridas .brand-mark>span{background:#e6a54b}
 #page-despesas .expense-icon-action svg{display:block;width:19px;height:19px;flex:none}
 #page-despesas .expense-icon-edit,#page-despesas .expense-icon-delete{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line-strong))}
 #page-despesas .expense-icon-delete:hover,#page-despesas .expense-icon-edit:hover{color:var(--accent);background:var(--accent-soft);border-color:var(--accent)}
+
+/* Ações de despesas: monocromáticas e discretas, conforme modo claro/escuro. */
+#page-despesas .expense-entry-actions{gap:6px}
+#page-despesas .expense-icon-action,
+#page-despesas .expense-icon-edit,
+#page-despesas .expense-icon-delete{width:36px;height:36px;min-height:36px;padding:8px;border:1px solid var(--line-strong);border-radius:10px;background:transparent;color:#101010;box-shadow:none;transform:none}
+#page-despesas .expense-icon-action svg{width:18px;height:18px;stroke-width:1.8}
+#page-despesas .expense-icon-action:hover,
+#page-despesas .expense-icon-edit:hover,
+#page-despesas .expense-icon-delete:hover{background:var(--surface-soft);border-color:var(--line-strong);color:#101010;transform:none}
+body.dark #page-despesas .expense-icon-action,
+body.dark #page-despesas .expense-icon-edit,
+body.dark #page-despesas .expense-icon-delete{color:#fff}
+body.dark #page-despesas .expense-icon-action:hover,
+body.dark #page-despesas .expense-icon-edit:hover,
+body.dark #page-despesas .expense-icon-delete:hover{color:#fff}
+#page-despesas .expense-icon-action:focus-visible{outline:2px solid var(--text);outline-offset:3px}
