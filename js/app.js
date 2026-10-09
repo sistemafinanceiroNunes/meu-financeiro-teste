@@ -399,13 +399,47 @@ function renderExpenseList(){
   list('expenseList',entries,entry=>renderEntry(entry,'despesas'),month===null?'Nenhuma despesa adicionada.':'Nenhuma despesa neste mês.');
   $('expenseFilterStatus').textContent=month===null?'Todas as despesas':`Exibindo despesas de ${new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(new Date(Number(month.slice(0,4)),Number(month.slice(5,7))-1,1))}`;
 }
-$('expenseMonthFilter').value=today().slice(0,7);
+const expenseMonthNames=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+let expenseDraftMonth=today().slice(0,7);
+function setExpensePickerOpen(open){
+  $('expensePeriodPicker').hidden=!open;
+  $('expensePeriodToggle').setAttribute('aria-expanded',String(open));
+  if(!open)setExpenseYearOpen(false);
+}
+function setExpenseYearOpen(open){
+  $('expenseYearOptions').hidden=!open;
+  $('expenseYearToggle').setAttribute('aria-expanded',String(open));
+}
+function updateExpensePicker(){
+  const [year,month]=expenseDraftMonth.split('-').map(Number);
+  $('expenseYearLabel').textContent=String(year);
+  $('expensePeriodLabel').textContent=expenseMonthNames[month-1]+' / '+year;
+  const months=$('expenseMonthOptions');months.replaceChildren();
+  expenseMonthNames.forEach((name,i)=>{
+    const button=node('button',name,'expense-month-option');button.type='button';
+    const selected=i+1===month;button.classList.toggle('is-selected',selected);button.setAttribute('aria-pressed',String(selected));
+    button.addEventListener('click',()=>{expenseDraftMonth=year+'-'+String(i+1).padStart(2,'0');updateExpensePicker();});
+    months.append(button);
+  });
+  const years=$('expenseYearOptions');years.replaceChildren();
+  const currentYear=Number(today().slice(0,4)),first=Math.min(year-12,currentYear-12),last=Math.max(year+12,currentYear+12);
+  for(let y=last;y>=first;y--){
+    const button=node('button',String(y),'expense-year-option');button.type='button';
+    button.classList.toggle('is-selected',y===year);button.setAttribute('aria-pressed',String(y===year));
+    button.addEventListener('click',()=>{expenseDraftMonth=y+'-'+String(month).padStart(2,'0');updateExpensePicker();setExpenseYearOpen(false);});
+    years.append(button);
+  }
+}
+updateExpensePicker();
+$('expensePeriodToggle').addEventListener('click',()=>setExpensePickerOpen($('expensePeriodPicker').hidden));
+$('expenseYearToggle').addEventListener('click',()=>setExpenseYearOpen($('expenseYearOptions').hidden));
 $('expenseFilterApply').addEventListener('click',()=>{
-  const month=$('expenseMonthFilter').value;
-  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){notify('Selecione um mês e ano válidos.',true);return;}
-  state.expenseFilterMonth=month;if(state.ready)renderExpenseList();
+  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(expenseDraftMonth)){notify('Selecione um mês e ano válidos.',true);return;}
+  state.expenseFilterMonth=expenseDraftMonth;setExpensePickerOpen(false);if(state.ready)renderExpenseList();
 });
-$('expenseFilterAll').addEventListener('click',()=>{state.expenseFilterMonth=null;$('expenseMonthFilter').value=today().slice(0,7);if(state.ready)renderExpenseList();});
+$('expenseFilterAll').addEventListener('click',()=>{state.expenseFilterMonth=null;expenseDraftMonth=today().slice(0,7);updateExpensePicker();setExpensePickerOpen(false);if(state.ready)renderExpenseList();});
+document.addEventListener('click',event=>{if(!event.target.closest('.expense-period-wrap'))setExpensePickerOpen(false);});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('expensePeriodPicker').hidden){setExpensePickerOpen(false);$('expensePeriodToggle').focus();}});
 function render(){
   if(!state.ready)return;
   const context=dashboardContext();if(!context)return;const {period,summary,breakdown}=context,commitment=summary.commitment;
