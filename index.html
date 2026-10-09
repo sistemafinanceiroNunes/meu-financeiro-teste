@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=44">
+  <link rel="stylesheet" href="styles.css?v=43">
 </head>
 <body>
   <a class="skip-link" href="#main">Ir para o conteúdo</a>
@@ -341,8 +341,8 @@
       <p id="entryHelp" class="muted"></p>
       <label for="entryName">Descrição</label><input id="entryName" name="name" maxlength="160" required>
       <div class="form-grid">
-        <div id="incomeModeField" hidden><label for="incomeMode">Modalidade da receita</label><select id="incomeMode"><option value="extra">Extra — valor por mês escolhido</option><option value="extra-total">Extra parcelada — valor total nos meses escolhidos</option><option value="fixed">Fixa — todo mês, até alterar</option><option value="until">Fixa até — período definido</option></select></div>
-        <div id="genericModeField"><label for="entryMode">Modalidade</label><select id="entryMode" name="mode"><option value="single">Única</option><option value="installments">Parcelada (valor total — meses seguidos)</option><option value="custom-installments">Parcelada (valor total — meses escolhidos)</option><option value="monthly">Mensal (valor por mês)</option><option value="custom">Personalizada (valor por mês escolhido)</option><option value="legacy" hidden>Calendário existente</option></select></div>
+        <div id="incomeModeField" hidden><label for="incomeMode">Modalidade da receita</label><select id="incomeMode"><option value="extra">Extra — meses escolhidos</option><option value="fixed">Fixa — todo mês, até alterar</option><option value="until">Fixa até — período definido</option></select></div>
+        <div id="genericModeField"><label for="entryMode">Modalidade</label><select id="entryMode" name="mode"><option value="single">Única</option><option value="installments">Parcelada (valor total)</option><option value="monthly">Mensal (valor por mês)</option><option value="custom">Personalizada (meses escolhidos)</option><option value="legacy" hidden>Calendário existente</option></select></div>
         <div><label id="valueLabel" for="entryValue">Valor (R$)</label><input id="entryValue" name="value" type="number" inputmode="decimal" min="0.01" step="0.01" required></div>
         <div><label id="dateLabel" for="entryDate">Data prevista</label><input id="entryDate" name="date" type="date" min="1900-01-01" max="9999-12-31" required></div>
         <div id="countField"><label for="entryCount">Quantidade de meses</label><input id="entryCount" name="count" type="number" min="1" max="360" step="1" value="1" required></div><div id="endDateField" hidden><label for="entryEndDate">Data final</label><input id="entryEndDate" name="endDate" type="date" min="1900-01-01" max="9999-12-31"></div>
@@ -398,7 +398,7 @@
   <noscript>Ative o JavaScript para acessar o sistema financeiro.</noscript>
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script>window.lucide?.createIcons();</script>
-  <script type="module" src="js/app.js?v=44"></script>
-  <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js?v=44").catch(()=>{}));}</script>
+  <script type="module" src="js/app.js?v=43"></script>
+  <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js?v=43").catch(()=>{}));}</script>
 </body>
 </html>
